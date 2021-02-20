@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -36,8 +37,9 @@ var (
 	usersFlag       = flag.String("users", "", "comma-delimiited list of users")
 	sinceFlag       = flag.String("since", "", "when to query from")
 	untilFlag       = flag.String("until", "", "when to query till")
+	reviewsFlag     = flag.Bool("reviews", false, "generate data on PR reviews")
 	includeFileInfo = flag.Bool("file-metadata", true, "Include file information, such as deltas (slower)")
-	tokenFlag       = flag.String("token", "", "GitHub token")
+	tokenPath       = flag.String("token-path", "", "GitHub token path")
 )
 
 func main() {
@@ -48,28 +50,32 @@ func main() {
 
 	flag.Parse()
 
-	if *reposFlag == "" || *sinceFlag == "" || *tokenFlag == "" {
-		fmt.Println("usage: pullsheet --repos <repository> --since 2006-01-02 --token <github token> [--user=<user>]")
+	if *reposFlag == "" || *sinceFlag == "" || *tokenPath == "" {
+		fmt.Println("usage: pullsheet --repos <repository> --since 2006-01-02 --token <github token> [--users=<user>]")
 		os.Exit(2)
 	}
 
 	since, err := time.Parse(dateForm, *sinceFlag)
 	if err != nil {
-		panic(err)
+		klog.Exitf("since time parse: %v", err)
 	}
 
 	until := time.Now()
 	if *untilFlag != "" {
 		until, err = time.Parse(dateForm, *untilFlag)
 		if err != nil {
-			panic(err)
+			klog.Exitf("until time parse: %v", err)
 		}
 	}
 
 	ctx := context.Background()
-	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: *tokenFlag}))
+	token, err := ioutil.ReadFile(*tokenPath)
+	if err != nil {
+		klog.Exitf("token file: %v", err)
+	}
+
+	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: strings.TrimSpace(string(token))}))
 	c := github.NewClient(tc)
-	result := map[*github.PullRequest][]*github.CommitFile{}
 	var users []string
 
 	for _, u := range strings.Split(*usersFlag, ",") {
@@ -78,18 +84,41 @@ func main() {
 		}
 	}
 
+	repos := strings.Split(*reposFlag, ",")
+	out := ""
+
+	if *reviewsFlag {
+		out, err = generateReviewData(ctx, c, repos, users, since, until)
+	} else {
+		out, err = generatePullData(ctx, c, repos, users, since, until, *includeFileInfo)
+	}
+
+	if err != nil {
+		klog.Exitf("generate failed: %v", err)
+	}
+	fmt.Print(out)
+}
+
+func generateReviewData(ctx context.Context, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
+	return "", fmt.Errorf("not yet implemented")
+}
+
+func generatePullData(ctx context.Context, c *github.Client, repos []string, users []string, since time.Time, until time.Time, fileInfo bool) (string, error) {
+	result := map[*github.PullRequest][]*github.CommitFile{}
+
 	for _, r := range strings.Split(*reposFlag, ",") {
 		org, project := repo.ParseURL(r)
+
 		prs, err := repo.ListPulls(ctx, c, org, project, since, until, users)
 		if err != nil {
-			klog.Exitf("failed: %v", err)
+			return "", fmt.Errorf("list: %v", err)
 		}
 
 		for _, pr := range prs {
 			var files []*github.CommitFile
 			var err error
 
-			if *includeFileInfo {
+			if fileInfo {
 				files, err = repo.FilteredFiles(ctx, c, org, project, pr.GetNumber())
 				if err != nil {
 					klog.Errorf("unable to get file list for #%d: %v", pr.GetNumber(), err)
@@ -102,11 +131,8 @@ func main() {
 
 	sum, err := repo.PullSummary(result, since, until, *includeFileInfo)
 	if err != nil {
-		klog.Exitf("sheet creation failed: %v", err)
+		return "", fmt.Errorf("pull summary failed: %v", err)
 	}
-	out, err := gocsv.MarshalString(&sum)
-	if err != nil {
-		klog.Exitf("marshal failed: %v", err)
-	}
-	fmt.Print(out)
+
+	return gocsv.MarshalString(&sum)
 }
