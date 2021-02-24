@@ -1,13 +1,17 @@
 package repo
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/blevesearch/segment"
+	"github.com/google/go-github/v33/github"
 	"k8s.io/klog/v2"
 )
 
@@ -39,8 +43,8 @@ func FilteredFiles(ctx context.Context, c *github.Client, org string, project st
 	return files, err
 }
 
-// ListPulls returns a list of pull requests in a project
-func ListPulls(ctx context.Context, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*github.PullRequest, error) {
+// MergedPulls returns a list of pull requests in a project
+func MergedPulls(ctx context.Context, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*github.PullRequest, error) {
 	var result []*github.PullRequest
 
 	opts := &github.PullRequestListOptions{
@@ -119,6 +123,151 @@ func ListPulls(ctx context.Context, c *github.Client, org string, project string
 	}
 	klog.Infof("Returning %d pull request results", len(result))
 	return result, nil
+}
+
+// ReviewSummary a summary of a users reviews on a PR
+type ReviewSummary struct {
+	URL            string
+	Date           string
+	Reviewer       string
+	PRAuthor       string
+	Project        string
+	Title          string
+	PRComments     int
+	ReviewComments int
+	Words          int
+}
+
+type comment struct {
+	Author    string
+	Body      string
+	Review    bool
+	CreatedAt time.Time
+}
+
+// MergedReviews returns a list of pull requests in a project (merged only)
+func MergedReviews(ctx context.Context, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*ReviewSummary, error) {
+	prs, err := MergedPulls(ctx, c, org, project, since, until, nil)
+	if err != nil {
+		return nil, fmt.Errorf("pulls: %v", err)
+	}
+
+	popts := &github.PullRequestListCommentsOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+
+	iopts := &github.IssueListCommentsOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+
+	klog.Infof("found %d PR's to check reviews for", len(prs))
+	reviews := []*ReviewSummary{}
+
+	matchUser := map[string]bool{}
+	for _, u := range users {
+		matchUser[strings.ToLower(u)] = true
+	}
+
+	for _, pr := range prs {
+		// username -> summary
+		prMap := map[string]*ReviewSummary{}
+		comments := []comment{}
+
+		// There is wickedness in the GitHub API: PR comments are available via the Issues API, and PR *review* comments are available via the PullRequests API
+		cs, _, err := c.PullRequests.ListComments(ctx, org, project, pr.GetNumber(), popts)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, c := range cs {
+			if isBot(c.GetUser()) {
+				continue
+			}
+			comments = append(comments, comment{Author: c.GetUser().GetLogin(), Body: c.GetBody(), CreatedAt: c.GetCreatedAt(), Review: true})
+		}
+
+		is, _, err := c.Issues.ListComments(ctx, org, project, pr.GetNumber(), iopts)
+		if err != nil {
+			return nil, err
+		}
+		for _, i := range is {
+			if isBot(i.GetUser()) {
+				continue
+			}
+			comments = append(comments, comment{Author: i.GetUser().GetLogin(), Body: i.GetBody(), CreatedAt: i.GetCreatedAt(), Review: false})
+		}
+
+		for _, c := range comments {
+			if len(matchUser) > 0 && !matchUser[strings.ToLower(c.Author)] {
+				continue
+			}
+
+			if c.Author == pr.GetUser().GetLogin() {
+				continue
+			}
+
+			if prMap[c.Author] == nil {
+				prMap[c.Author] = &ReviewSummary{
+					URL:      pr.GetHTMLURL(),
+					PRAuthor: pr.GetUser().GetLogin(),
+					Reviewer: c.Author,
+					Project:  project,
+					Title:    pr.GetTitle(),
+				}
+
+			}
+			if c.Review {
+				prMap[c.Author].ReviewComments++
+			} else {
+				prMap[c.Author].PRComments++
+			}
+
+			prMap[c.Author].Date = c.CreatedAt.Format(dateForm)
+			words := wordCount(c.Body)
+			prMap[c.Author].Words += words
+			klog.Infof("%d word comment by %s: %q for %s/%s #%d", words, c.Author, strings.TrimSpace(c.Body), org, project, pr.GetNumber())
+		}
+
+		for _, rs := range prMap {
+			reviews = append(reviews, rs)
+		}
+	}
+
+	return reviews, err
+}
+
+// wordCount counts words in a string, irrespective of language
+func wordCount(s string) int {
+	words := 0
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	scanner.Split(segment.SplitWords)
+	for scanner.Scan() {
+		if !unicode.IsLetter(rune(scanner.Bytes()[0])) {
+			continue
+		}
+		words++
+	}
+	return words
+}
+
+func isBot(u *github.User) bool {
+	if u.GetType() == "bot" {
+		return true
+	}
+
+	if strings.Contains(u.GetBio(), "stale issues") {
+		return true
+	}
+
+	if strings.HasSuffix(u.GetLogin(), "-bot") || strings.HasSuffix(u.GetLogin(), "-robot") || strings.HasSuffix(u.GetLogin(), "_bot") || strings.HasSuffix(u.GetLogin(), "_robot") {
+		return true
+	}
+
+	return false
 }
 
 // PRSummary is a summary of a single PR

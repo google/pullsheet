@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/gocarina/gocsv"
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v33/github"
 	"github.com/google/pullsheet/pkg/repo"
 	"golang.org/x/oauth2"
 	"k8s.io/klog/v2"
@@ -100,16 +100,26 @@ func main() {
 }
 
 func generateReviewData(ctx context.Context, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
-	return "", fmt.Errorf("not yet implemented")
+	rs := []*repo.ReviewSummary{}
+	for _, r := range repos {
+		org, project := repo.ParseURL(r)
+		rrs, err := repo.MergedReviews(ctx, c, org, project, since, until, users)
+		if err != nil {
+			return "", fmt.Errorf("merged pulls: %v", err)
+		}
+		rs = append(rs, rrs...)
+	}
+
+	return gocsv.MarshalString(&rs)
 }
 
 func generatePullData(ctx context.Context, c *github.Client, repos []string, users []string, since time.Time, until time.Time, fileInfo bool) (string, error) {
-	result := map[*github.PullRequest][]*github.CommitFile{}
+	prFiles := map[*github.PullRequest][]*github.CommitFile{}
 
-	for _, r := range strings.Split(*reposFlag, ",") {
+	for _, r := range repos {
 		org, project := repo.ParseURL(r)
 
-		prs, err := repo.ListPulls(ctx, c, org, project, since, until, users)
+		prs, err := repo.MergedPulls(ctx, c, org, project, since, until, users)
 		if err != nil {
 			return "", fmt.Errorf("list: %v", err)
 		}
@@ -125,11 +135,11 @@ func generatePullData(ctx context.Context, c *github.Client, repos []string, use
 				}
 			}
 
-			result[pr] = files
+			prFiles[pr] = files
 		}
 	}
 
-	sum, err := repo.PullSummary(result, since, until, *includeFileInfo)
+	sum, err := repo.PullSummary(prFiles, since, until, *includeFileInfo)
 	if err != nil {
 		return "", fmt.Errorf("pull summary failed: %v", err)
 	}
