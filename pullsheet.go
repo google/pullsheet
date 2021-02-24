@@ -26,6 +26,8 @@ import (
 	"github.com/gocarina/gocsv"
 	"github.com/google/go-github/v33/github"
 	"github.com/google/pullsheet/pkg/repo"
+	"github.com/google/pullsheet/pkg/ghcache"
+	"github.com/peterbourgon/diskv"
 	"golang.org/x/oauth2"
 	"k8s.io/klog/v2"
 )
@@ -87,10 +89,15 @@ func main() {
 	repos := strings.Split(*reposFlag, ",")
 	out := ""
 
+	dv, err := ghcache.New()
+	if err != nil {
+		klog.Exitf("cache: %v", err)
+	}
+
 	if *reviewsFlag {
-		out, err = generateReviewData(ctx, c, repos, users, since, until)
+		out, err = generateReviewData(ctx, dv, c, repos, users, since, until)
 	} else {
-		out, err = generatePullData(ctx, c, repos, users, since, until, *includeFileInfo)
+		out, err = generatePullData(ctx, dv, c, repos, users, since, until, *includeFileInfo)
 	}
 
 	if err != nil {
@@ -99,11 +106,11 @@ func main() {
 	fmt.Print(out)
 }
 
-func generateReviewData(ctx context.Context, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
+func generateReviewData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
 	rs := []*repo.ReviewSummary{}
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
-		rrs, err := repo.MergedReviews(ctx, c, org, project, since, until, users)
+		rrs, err := repo.MergedReviews(ctx, dv, c, org, project, since, until, users)
 		if err != nil {
 			return "", fmt.Errorf("merged pulls: %v", err)
 		}
@@ -113,13 +120,13 @@ func generateReviewData(ctx context.Context, c *github.Client, repos []string, u
 	return gocsv.MarshalString(&rs)
 }
 
-func generatePullData(ctx context.Context, c *github.Client, repos []string, users []string, since time.Time, until time.Time, fileInfo bool) (string, error) {
+func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time, fileInfo bool) (string, error) {
 	prFiles := map[*github.PullRequest][]*github.CommitFile{}
 
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
 
-		prs, err := repo.MergedPulls(ctx, c, org, project, since, until, users)
+		prs, err := repo.MergedPulls(ctx, dv, c, org, project, since, until, users)
 		if err != nil {
 			return "", fmt.Errorf("list: %v", err)
 		}
@@ -129,7 +136,7 @@ func generatePullData(ctx context.Context, c *github.Client, repos []string, use
 			var err error
 
 			if fileInfo {
-				files, err = repo.FilteredFiles(ctx, c, org, project, pr.GetNumber())
+				files, err = repo.FilteredFiles(ctx, dv, c, org, project, pr.GetNumber())
 				if err != nil {
 					klog.Errorf("unable to get file list for #%d: %v", pr.GetNumber(), err)
 				}

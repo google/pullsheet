@@ -12,6 +12,8 @@ import (
 
 	"github.com/blevesearch/segment"
 	"github.com/google/go-github/v33/github"
+	"github.com/google/pullsheet/pkg/ghcache"
+	"github.com/peterbourgon/diskv"
 	"k8s.io/klog/v2"
 )
 
@@ -21,10 +23,12 @@ var (
 	ignorePathRe = regexp.MustCompile(`go\.mod|go\.sum|vendor/|third_party|ignore|schemas/v\d|schema/v\d|Gopkg.lock|.DS_Store`)
 	truncRe      = regexp.MustCompile(`changelog|CHANGELOG|Gopkg.toml`)
 	commentRe    = regexp.MustCompile(`<!--.*?>`)
+	notSegmentRe = regexp.MustCompile(`[/-_]+`)
+	tagRe        = regexp.MustCompile(`/[\w-]+`)
 )
 
 // FilteredFiles returns a filtered list of files modified by a PR
-func FilteredFiles(ctx context.Context, c *github.Client, org string, project string, num int) ([]*github.CommitFile, error) {
+func FilteredFiles(ctx context.Context, _ *diskv.Diskv, c *github.Client, org string, project string, num int) ([]*github.CommitFile, error) {
 	klog.Infof("Fetching file list for #%d", num)
 
 	var files []*github.CommitFile
@@ -44,7 +48,7 @@ func FilteredFiles(ctx context.Context, c *github.Client, org string, project st
 }
 
 // MergedPulls returns a list of pull requests in a project
-func MergedPulls(ctx context.Context, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*github.PullRequest, error) {
+func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*github.PullRequest, error) {
 	var result []*github.PullRequest
 
 	opts := &github.PullRequestListOptions{
@@ -101,7 +105,7 @@ func MergedPulls(ctx context.Context, c *github.Client, org string, project stri
 
 			klog.Infof("Fetching PR #%d by %s: %q", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetTitle())
 
-			fullPR, _, err := c.PullRequests.Get(ctx, org, project, pr.GetNumber())
+			fullPR, err := ghcache.PullRequestsGet(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
 			if err != nil {
 				klog.Errorf("pull failed, retrying: %v", err)
 				time.Sleep(time.Second * 1)
@@ -146,8 +150,8 @@ type comment struct {
 }
 
 // MergedReviews returns a list of pull requests in a project (merged only)
-func MergedReviews(ctx context.Context, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*ReviewSummary, error) {
-	prs, err := MergedPulls(ctx, c, org, project, since, until, nil)
+func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*ReviewSummary, error) {
+	prs, err := MergedPulls(ctx, dv, c, org, project, since, until, nil)
 	if err != nil {
 		return nil, fmt.Errorf("pulls: %v", err)
 	}
@@ -216,9 +220,8 @@ func MergedReviews(ctx context.Context, c *github.Client, org string, project st
 					PRAuthor: pr.GetUser().GetLogin(),
 					Reviewer: c.Author,
 					Project:  project,
-					Title:    pr.GetTitle(),
+					Title:    strings.TrimSpace(pr.GetTitle()),
 				}
-
 			}
 			if c.Review {
 				prMap[c.Author].ReviewComments++
@@ -242,6 +245,9 @@ func MergedReviews(ctx context.Context, c *github.Client, org string, project st
 
 // wordCount counts words in a string, irrespective of language
 func wordCount(s string) int {
+	// Don't count certain items, like / or - as word segments
+	s = notSegmentRe.ReplaceAllString(s, "")
+
 	words := 0
 	scanner := bufio.NewScanner(strings.NewReader(s))
 	scanner.Split(segment.SplitWords)
@@ -264,6 +270,10 @@ func isBot(u *github.User) bool {
 	}
 
 	if strings.HasSuffix(u.GetLogin(), "-bot") || strings.HasSuffix(u.GetLogin(), "-robot") || strings.HasSuffix(u.GetLogin(), "_bot") || strings.HasSuffix(u.GetLogin(), "_robot") {
+		return true
+	}
+
+	if strings.HasPrefix(u.GetLogin(), "codecov") || strings.HasPrefix(u.GetLogin(), "Travis") {
 		return true
 	}
 
