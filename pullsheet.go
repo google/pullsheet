@@ -25,8 +25,8 @@ import (
 
 	"github.com/gocarina/gocsv"
 	"github.com/google/go-github/v33/github"
-	"github.com/google/pullsheet/pkg/repo"
 	"github.com/google/pullsheet/pkg/ghcache"
+	"github.com/google/pullsheet/pkg/repo"
 	"github.com/peterbourgon/diskv"
 	"golang.org/x/oauth2"
 	"k8s.io/klog/v2"
@@ -136,7 +136,7 @@ func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, re
 			var err error
 
 			if fileInfo {
-				files, err = repo.FilteredFiles(ctx, dv, c, org, project, pr.GetNumber())
+				files, err = repo.FilteredFiles(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
 				if err != nil {
 					klog.Errorf("unable to get file list for #%d: %v", pr.GetNumber(), err)
 				}

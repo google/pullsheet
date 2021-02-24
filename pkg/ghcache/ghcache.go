@@ -20,7 +20,10 @@ const (
 )
 
 type blob struct {
-	PullRequest github.PullRequest
+	PullRequest         github.PullRequest
+	CommitFiles         []github.CommitFile
+	PullRequestComments []github.PullRequestComment
+	IssueComments       []github.IssueComment
 }
 
 func PullRequestsGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) (*github.PullRequest, error) {
@@ -40,6 +43,69 @@ func PullRequestsGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t t
 	return &val.PullRequest, nil
 }
 
+func PullRequestsListFiles(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]github.CommitFile, error) {
+	key := fmt.Sprintf("pr-listfiles-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
+	val, err := read(dv, key)
+
+	if err != nil {
+		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		fsp, _, err := c.PullRequests.ListFiles(ctx, org, project, num, &github.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("get: %v", err)
+		}
+		fs := []github.CommitFile{}
+		for _, f := range fsp {
+			fs = append(fs, *f)
+		}
+		return fs, save(dv, key, blob{CommitFiles: fs})
+	}
+
+	klog.V(1).Infof("cache hit: %v", key)
+	return val.CommitFiles, nil
+}
+
+func PullRequestsListComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]github.PullRequestComment, error) {
+	key := fmt.Sprintf("pr-comments-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
+	val, err := read(dv, key)
+
+	if err != nil {
+		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		csp, _, err := c.PullRequests.ListComments(ctx, org, project, num, &github.PullRequestListCommentsOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("get: %v", err)
+		}
+		cs := []github.PullRequestComment{}
+		for _, c := range csp {
+			cs = append(cs, *c)
+		}
+		return cs, save(dv, key, blob{PullRequestComments: cs})
+	}
+
+	klog.V(1).Infof("cache hit: %v", key)
+	return val.PullRequestComments, nil
+}
+
+func IssuesListComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]github.IssueComment, error) {
+	key := fmt.Sprintf("issue-comments-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
+	val, err := read(dv, key)
+
+	if err != nil {
+		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		csp, _, err := c.Issues.ListComments(ctx, org, project, num, &github.IssueListCommentsOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("get: %v", err)
+		}
+		cs := []github.IssueComment{}
+		for _, c := range csp {
+			cs = append(cs, *c)
+		}
+		return cs, save(dv, key, blob{IssueComments: cs})
+	}
+
+	klog.V(1).Infof("cache hit: %v", key)
+	return val.IssueComments, nil
+}
+
 func save(dv *diskv.Diskv, key string, blob blob) error {
 	var bs bytes.Buffer
 	enc := gob.NewEncoder(&bs)
@@ -57,7 +123,6 @@ func read(dv *diskv.Diskv, key string) (blob, error) {
 		return bl, err
 	}
 
-	klog.Infof("read %d bytes from %s", len(val), key)
 	enc := gob.NewDecoder(bytes.NewBuffer(val))
 	err = enc.Decode(&bl)
 	return bl, err
