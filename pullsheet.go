@@ -35,13 +35,12 @@ import (
 const dateForm = "2006-01-02"
 
 var (
-	reposFlag       = flag.String("repos", "", "comma-delimited list of repositories. ex: kubernetes/minikube")
-	usersFlag       = flag.String("users", "", "comma-delimiited list of users")
-	sinceFlag       = flag.String("since", "", "when to query from")
-	untilFlag       = flag.String("until", "", "when to query till")
-	reviewsFlag     = flag.Bool("reviews", false, "generate data on PR reviews")
-	includeFileInfo = flag.Bool("file-metadata", true, "Include file information, such as deltas (slower)")
-	tokenPath       = flag.String("token-path", "", "GitHub token path")
+	reposFlag = flag.String("repos", "", "comma-delimited list of repositories. ex: kubernetes/minikube")
+	usersFlag = flag.String("users", "", "comma-delimiited list of users")
+	sinceFlag = flag.String("since", "", "when to query from")
+	untilFlag = flag.String("until", "", "when to query till")
+	modeFlag  = flag.String("mode", "pr", "mode: pr, pr_comment, issue, issue_comment")
+	tokenPath = flag.String("token-path", "", "GitHub token path")
 )
 
 func main() {
@@ -87,17 +86,23 @@ func main() {
 	}
 
 	repos := strings.Split(*reposFlag, ",")
-	out := ""
 
 	dv, err := ghcache.New()
 	if err != nil {
 		klog.Exitf("cache: %v", err)
 	}
 
-	if *reviewsFlag {
+	var out string
+
+	switch *modeFlag {
+	case "pr_comment", "pr_comments":
 		out, err = generateReviewData(ctx, dv, c, repos, users, since, until)
-	} else {
-		out, err = generatePullData(ctx, dv, c, repos, users, since, until, *includeFileInfo)
+	case "pr", "prs":
+		out, err = generatePullData(ctx, dv, c, repos, users, since, until)
+	case "issue", "issues":
+		out, err = generateIssueData(ctx, dv, c, repos, users, since, until)
+	default:
+		err = fmt.Errorf("unknown mode: %q", *modeFlag)
 	}
 
 	if err != nil {
@@ -120,7 +125,7 @@ func generateReviewData(ctx context.Context, dv *diskv.Diskv, c *github.Client, 
 	return gocsv.MarshalString(&rs)
 }
 
-func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time, fileInfo bool) (string, error) {
+func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
 	prFiles := map[*github.PullRequest][]*github.CommitFile{}
 
 	for _, r := range repos {
@@ -135,21 +140,33 @@ func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, re
 			var files []*github.CommitFile
 			var err error
 
-			if fileInfo {
-				files, err = repo.FilteredFiles(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
-				if err != nil {
-					klog.Errorf("unable to get file list for #%d: %v", pr.GetNumber(), err)
-				}
+			files, err = repo.FilteredFiles(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
+			if err != nil {
+				klog.Errorf("unable to get file list for #%d: %v", pr.GetNumber(), err)
 			}
 
 			prFiles[pr] = files
 		}
 	}
 
-	sum, err := repo.PullSummary(prFiles, since, until, *includeFileInfo)
+	sum, err := repo.PullSummary(prFiles, since, until)
 	if err != nil {
 		return "", fmt.Errorf("pull summary failed: %v", err)
 	}
 
 	return gocsv.MarshalString(&sum)
+}
+
+func generateIssueData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
+	rs := []*repo.IssueSummary{}
+	for _, r := range repos {
+		org, project := repo.ParseURL(r)
+		rrs, err := repo.ClosedIssues(ctx, dv, c, org, project, since, until, users)
+		if err != nil {
+			return "", fmt.Errorf("merged pulls: %v", err)
+		}
+		rs = append(rs, rrs...)
+	}
+
+	return gocsv.MarshalString(&rs)
 }

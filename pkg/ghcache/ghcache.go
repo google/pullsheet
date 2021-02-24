@@ -24,6 +24,7 @@ type blob struct {
 	CommitFiles         []github.CommitFile
 	PullRequestComments []github.PullRequestComment
 	IssueComments       []github.IssueComment
+	Issue               github.Issue
 }
 
 func PullRequestsGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) (*github.PullRequest, error) {
@@ -83,6 +84,23 @@ func PullRequestsListComments(ctx context.Context, dv *diskv.Diskv, c *github.Cl
 
 	klog.V(1).Infof("cache hit: %v", key)
 	return val.PullRequestComments, nil
+}
+
+func IssuesGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) (*github.Issue, error) {
+	key := fmt.Sprintf("issue-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
+	val, err := read(dv, key)
+
+	if err != nil {
+		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		i, _, err := c.Issues.Get(ctx, org, project, num)
+		if err != nil {
+			return nil, fmt.Errorf("get: %v", err)
+		}
+		return i, save(dv, key, blob{Issue: *i})
+	}
+
+	klog.V(1).Infof("cache hit: %v", key)
+	return &val.Issue, nil
 }
 
 func IssuesListComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]github.IssueComment, error) {
