@@ -45,7 +45,7 @@ func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 		return nil, fmt.Errorf("pulls: %v", err)
 	}
 
-	klog.Infof("found %d PR's to check reviews for", len(prs))
+	klog.Infof("found %d PR's in %s/%s to find reviews for", len(prs), org, project)
 	reviews := []*ReviewSummary{}
 
 	matchUser := map[string]bool{}
@@ -83,7 +83,7 @@ func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 
 			body := strings.TrimSpace(i.GetBody())
 			if (strings.HasPrefix(body, "/") || strings.HasPrefix(body, "cc")) && len(body) < 64 {
-				klog.Infof("ignoring tag comment: %q", body)
+				klog.Infof("ignoring tag comment in %s: %q", i.GetHTMLURL(), body)
 				continue
 			}
 
