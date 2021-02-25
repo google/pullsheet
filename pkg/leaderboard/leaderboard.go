@@ -14,7 +14,7 @@ import (
 const dateForm = "2006-01-02"
 
 // TopX is how many items to include in graphs
-var TopX = 12
+var TopX = 15
 
 type category struct {
 	Title  string

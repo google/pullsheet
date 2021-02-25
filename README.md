@@ -1,12 +1,15 @@
 # pullsheet
 
-pullsheet generates a CSV (comma separated values) file containing metadata containing links and statistics about 
-GitHub artifacts by a user or group of users across a series of GitHub repositories. It currently supports statistics on:
+pullsheet generates a CSV (comma separated values) & HTML output about GitHub activity across a series of repositories.
+
+It currently supports CSV exports for:
 
 * Merged Pull Requests: `--kind=prs` (default)
 * Pull Request Reviews: `--kind=reviews`
 * Opening/Closing Issues: `--kind=issues`
 * Issue Comments: `--kind=issue-comments`
+
+As well as a new HTML leaderboard mode: `--kind=leaderboard`
 
 This tool was created as a brain-tickler for what PR's to discuss when asking for that big promotion.
 

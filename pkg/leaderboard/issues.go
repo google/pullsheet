@@ -40,7 +40,7 @@ func commentsChart(cs []*repo.CommentSummary) chart {
 
 	return chart{
 		ID:     "comments",
-		Title:  "Most PR comments",
+		Title:  "Most Issue comments",
 		Metric: "PR Comments",
 		Items:  topItems(mapToItems(uMap)),
 	}

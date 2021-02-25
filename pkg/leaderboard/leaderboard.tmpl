@@ -9,9 +9,10 @@
 
     .board {
         clear: right;
-        border: 1px solid #666;
+        border: 1px solid #AAA;
         display: inline-block;
         padding: 1em;
+        margin: 1em;
         margin-left: auto;
         margin-right: auto;
     }
@@ -31,7 +32,7 @@
         {{ range .Charts }}
             <div class="board">
             <h3>{{ .Title }}</h3>
-            <div id="chart_{{ .ID }}" style="width: 280px; height: 280px;"></div>
+            <div id="chart_{{ .ID }}" style="width: 325px; height: 380px;"></div>
             <script type="text/javascript">
                 google.charts.setOnLoadCallback(draw{{ .ID}});
 
@@ -52,7 +53,7 @@
                         }
                     },
                     legend: { position: "none" },
-                    bar: { groupWidth: "95%" }
+                    bar: { groupWidth: "90%" }
                     };
 
                    var chart = new google.visualization.BarChart(document.getElementById('chart_{{.ID }}'));
