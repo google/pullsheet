@@ -71,6 +71,8 @@ func issues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, 
 		klog.Infof("Processing page %d of %s/%s issue results ...", page, org, project)
 
 		page = resp.NextPage
+		klog.Infof("Current issue updated at %s", issues[0].GetUpdatedAt())
+
 		for _, i := range issues {
 			if i.IsPullRequest() {
 				continue
@@ -79,14 +81,15 @@ func issues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, 
 				klog.Infof("issue #d closed at %s", i.GetNumber(), i.GetUpdatedAt())
 				continue
 			}
-			if !i.GetClosedAt().IsZero() && i.GetClosedAt().Before(since) {
-				continue
-			}
 
 			if i.GetUpdatedAt().Before(since) {
 				klog.Infof("Hit issue #%d updated at %s", i.GetNumber(), i.GetUpdatedAt())
 				page = 0
 				break
+			}
+
+			if !i.GetClosedAt().IsZero() && i.GetClosedAt().Before(since) {
+				continue
 			}
 
 			if state != "" && i.GetState() != state {

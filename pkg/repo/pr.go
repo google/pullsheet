@@ -46,9 +46,10 @@ func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org str
 			return result, err
 		}
 
-		klog.Infof("Processing page %d of %s/%s pull request results ...", page, org, project)
+		klog.Infof("Processing page %d of %s/%s pull request results (looking for %s)...", page, org, project, since)
 
 		page = resp.NextPage
+		klog.Infof("Current PR updated at %s", prs[0].GetUpdatedAt())
 		for _, pr := range prs {
 			if pr.GetClosedAt().After(until) {
 				klog.Infof("PR#d closed at %s", pr.GetNumber(), pr.GetUpdatedAt())
@@ -59,6 +60,10 @@ func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org str
 				klog.Infof("Hit PR#%d updated at %s", pr.GetNumber(), pr.GetUpdatedAt())
 				page = 0
 				break
+			}
+
+			if !pr.GetClosedAt().IsZero() && pr.GetClosedAt().Before(since) {
+				continue
 			}
 
 			uname := strings.ToLower(pr.GetUser().GetLogin())

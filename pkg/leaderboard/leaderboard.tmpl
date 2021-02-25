@@ -81,7 +81,7 @@
 </head>
 <body>
     <h1>{{ .Title }}</h1>
-    <div class="subtitle">from {{.From}} until {{.Until}}</div>
+    <div class="subtitle">{{.From}} &mdash; {{.Until}}</div>
 
     <h2 class="cli">Command-line</h2>
     <pre>{{.Command}}</pre>
@@ -93,7 +93,7 @@
             <div class="board">
             <h3>{{ .Title }}</h3>
             <p>{{ .Metric }}</p>
-            <div id="chart_{{ .ID }}" style="width: 300px; height: 380px;"></div>
+            <div id="chart_{{ .ID }}" style="width: 320px; height: 400px;"></div>
             <script type="text/javascript">
                 google.charts.setOnLoadCallback(draw{{ .ID}});
 
@@ -114,7 +114,7 @@
                         }
                     },
                     legend: { position: "none" },
-                    bar: { groupWidth: "90%" }
+                    bar: { groupWidth: "95%" }
                     };
 
                    var chart = new google.visualization.BarChart(document.getElementById('chart_{{.ID }}'));
