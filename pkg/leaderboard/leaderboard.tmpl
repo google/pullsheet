@@ -1,20 +1,76 @@
 <html>
 <head>
-    <title>{{ .Title }}</title>
+    <title>{{ .Title }} - Leaderboard</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet"> 
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
         google.charts.load("current", {packages:["corechart"]});
     </script>
     <style>
+    body {
+       font-family: 'Open Sans', sans-serif;
+       background-color: #f7f7fa;
+       padding: 1em;
+    }
+
+    h1 {
+      color: rgba(66,133,244);
+      margin-bottom: 0em;
+    }
+ 
+    .subtitle {
+      color: rgba(23,90,201);
+      font-size: small;
+    }
+    
+    pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        color: #666;
+        font-size: small;
+    }
+
+    h2.cli {
+       color: #666;
+    }
+
+    h2 {
+        color: #333;
+    }
+
+    .board p {
+        font-size: small;
+        color: #999;
+        text-align: center;
+    }
+
 
     .board {
         clear: right;
-        border: 1px solid #AAA;
         display: inline-block;
-        padding: 1em;
-        margin: 1em;
-        margin-left: auto;
-        margin-right: auto;
+        padding: 0.5em;
+        margin: 0.5em;
+        background-color: #fff;
+    }
+    .board:nth-child(4n+3) {
+        border: 2px solid rgba(66,133,244,0.25);
+        color: rgba(66,133,244);
+    }
+
+    .board:nth-child(4n+2) {
+        border: 2px solid rgba(219,68,55,0.25);
+        color: rgba rgba(219,68,55);
+    }
+
+    .board:nth-child(4n+1) {
+        border: 2px solid rgba(244,160,0,0.25);
+        color: rgba(244,160,0);
+    }
+
+    .board:nth-child(4n) {
+        border: 2px solid rgba(15,157,88,0.25);
+        color: rgba(15,157,88);
     }
 
     h3 {
@@ -25,6 +81,10 @@
 </head>
 <body>
     <h1>{{ .Title }}</h1>
+    <div class="subtitle">from {{.From}} until {{.Until}}</div>
+
+    <h2 class="cli">Command-line</h2>
+    <pre>{{.Command}}</pre>
 
     {{ range .Categories }}
         <h2>{{ .Title }}</h2>
@@ -32,7 +92,8 @@
         {{ range .Charts }}
             <div class="board">
             <h3>{{ .Title }}</h3>
-            <div id="chart_{{ .ID }}" style="width: 325px; height: 380px;"></div>
+            <p>{{ .Metric }}</p>
+            <div id="chart_{{ .ID }}" style="width: 300px; height: 380px;"></div>
             <script type="text/javascript">
                 google.charts.setOnLoadCallback(draw{{ .ID}});
 

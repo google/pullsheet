@@ -3,8 +3,11 @@ package leaderboard
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 	"sort"
+	"strings"
 	"text/template"
 	"time"
 
@@ -35,7 +38,7 @@ type item struct {
 }
 
 // Render returns an HTML formatted leaderboard page
-func Render(repos []string, users []string, since time.Time, until time.Time, prs []*repo.PRSummary, reviews []*repo.ReviewSummary, issues []*repo.IssueSummary, comments []*repo.CommentSummary) (string, error) {
+func Render(title string, since time.Time, until time.Time, prs []*repo.PRSummary, reviews []*repo.ReviewSummary, issues []*repo.IssueSummary, comments []*repo.CommentSummary) (string, error) {
 	files := []string{"pkg/leaderboard/leaderboard.tmpl"}
 	name := path.Base(files[0])
 	funcMap := template.FuncMap{}
@@ -46,16 +49,22 @@ func Render(repos []string, users []string, since time.Time, until time.Time, pr
 
 	data := struct {
 		Title      string
+		From       string
+		Until      string
+		Command    string
 		Categories []category
 	}{
-		Title: fmt.Sprintf("From %s to %s", since.Format(dateForm), until.Format(dateForm)),
+		Title:   title,
+		From:    since.Format(dateForm),
+		Until:   until.Format(dateForm),
+		Command: filepath.Base(os.Args[0]) + " " + strings.Join(os.Args[1:], " "),
 		Categories: []category{
 			{
 				Title: "Reviewers",
 				Charts: []chart{
-					reviewCommentsChart(reviews),
-					reviewWordsChart(reviews),
 					reviewsChart(reviews),
+					reviewWordsChart(reviews),
+					reviewCommentsChart(reviews),
 				},
 			},
 			{
@@ -63,15 +72,15 @@ func Render(repos []string, users []string, since time.Time, until time.Time, pr
 				Charts: []chart{
 					mergeChart(prs),
 					deltaChart(prs),
-					deleteChart(prs),
+					sizeChart(prs),
 				},
 			},
 			{
 				Title: "Issues",
 				Charts: []chart{
-					issueCloserChart(issues),
-					commentWordsChart(comments),
 					commentsChart(comments),
+					commentWordsChart(comments),
+					issueCloserChart(issues),
 				},
 			},
 		},

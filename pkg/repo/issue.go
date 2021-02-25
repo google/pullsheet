@@ -79,6 +79,9 @@ func issues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, 
 				klog.Infof("issue #d closed at %s", i.GetNumber(), i.GetUpdatedAt())
 				continue
 			}
+			if !i.GetClosedAt().IsZero() && i.GetClosedAt().Before(since) {
+				continue
+			}
 
 			if i.GetUpdatedAt().Before(since) {
 				klog.Infof("Hit issue #%d updated at %s", i.GetNumber(), i.GetUpdatedAt())
