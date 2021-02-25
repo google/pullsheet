@@ -3,8 +3,24 @@
     <title>{{ .Title }}</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
-        google.charts.load('current', {'packages':['bar']});
+        google.charts.load("current", {packages:["corechart"]});
     </script>
+    <style>
+
+    .board {
+        clear: right;
+        border: 1px solid #666;
+        display: inline-block;
+        padding: 1em;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    h3 {
+        text-align: center;
+    }
+
+    </style>
 </head>
 <body>
     <h1>{{ .Title }}</h1>
@@ -15,33 +31,36 @@
         {{ range .Charts }}
             <div class="board">
             <h3>{{ .Title }}</h3>
-            <div id="chart_{{ .ID }}" style="width: 250px; height: 600px;"></div>
+            <div id="chart_{{ .ID }}" style="width: 280px; height: 280px;"></div>
             <script type="text/javascript">
                 google.charts.setOnLoadCallback(draw{{ .ID}});
 
                 function draw{{.ID}}() {
                     var data = new google.visualization.arrayToDataTable([
-                    ['{{.Object}}', '{{.Metric}}'],
-                    {{ range .Rows }}["{{.Title}}", {{.Quantity}}],{{ end }}
+                    ['{{.Object}}', '{{.Metric}}', { role: 'annotation' }],
+                    {{ range .Items }}["{{.Name}}", {{.Count}}, "{{.Count}}"],
+                    {{ end }}
                     ]);
 
                     var options = {
+                    axisTitlesPosition: 'none',
+
                     bars: 'horizontal', // Required for Material Bar Charts.
                     axes: {
                         x: {
-                        0: { side: 'top', label: '{{.Metric}}'} // Top x-axis.
+                        y: { side: 'top'} // Top x-axis.
                         }
                     },
-                    bar: { groupWidth: "90%" }
+                    legend: { position: "none" },
+                    bar: { groupWidth: "95%" }
                     };
 
-                   var chart = new google.charts.Bar(document.getElementById('chart_{{.ID }}'));
+                   var chart = new google.visualization.BarChart(document.getElementById('chart_{{.ID }}'));
                    chart.draw(data, options);
                 };
             </script>
             </div>
         {{ end }}
-        <hr />
     {{ end}}
 </body>
 </html>

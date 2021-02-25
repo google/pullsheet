@@ -4,11 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"path"
+	"sort"
 	"text/template"
 	"time"
 
 	"github.com/google/pullsheet/pkg/repo"
 )
+
+const dateForm = "2006-01-02"
+
+// TopX is how many items to include in graphs
+var TopX = 12
 
 type category struct {
 	Title  string
@@ -17,18 +23,19 @@ type category struct {
 
 type chart struct {
 	ID     string
+	Title  string
 	Object string
 	Metric string
 	Items  []item
 }
 
 type item struct {
-	Title    string
-	Quantity int
+	Name  string
+	Count int
 }
 
 // Render returns an HTML formatted leaderboard page
-func Render(repos []string, users []string, since time.Time, until time.Time, prs []*repo.PRSummary) (string, error) {
+func Render(repos []string, users []string, since time.Time, until time.Time, prs []*repo.PRSummary, reviews []*repo.ReviewSummary, issues []*repo.IssueSummary, comments []*repo.CommentSummary) (string, error) {
 	files := []string{"pkg/leaderboard/leaderboard.tmpl"}
 	name := path.Base(files[0])
 	funcMap := template.FuncMap{}
@@ -41,9 +48,32 @@ func Render(repos []string, users []string, since time.Time, until time.Time, pr
 		Title      string
 		Categories []category
 	}{
-		Title: "Test",
+		Title: fmt.Sprintf("From %s to %s", since.Format(dateForm), until.Format(dateForm)),
 		Categories: []category{
-			{Title: "Pull Requests"},
+			{
+				Title: "Reviewers",
+				Charts: []chart{
+					reviewCommentsChart(reviews),
+					reviewWordsChart(reviews),
+					reviewsChart(reviews),
+				},
+			},
+			{
+				Title: "Pull Requests",
+				Charts: []chart{
+					mergeChart(prs),
+					deltaChart(prs),
+					deleteChart(prs),
+				},
+			},
+			{
+				Title: "Issues",
+				Charts: []chart{
+					issueCloserChart(issues),
+					commentWordsChart(comments),
+					commentsChart(comments),
+				},
+			},
 		},
 	}
 
@@ -54,4 +84,21 @@ func Render(repos []string, users []string, since time.Time, until time.Time, pr
 
 	out := tpl.String()
 	return out, nil
+}
+
+func topItems(items []item) []item {
+	sort.Slice(items, func(i, j int) bool { return items[i].Count > items[j].Count })
+
+	if len(items) > TopX {
+		items = items[:TopX]
+	}
+	return items
+}
+
+func mapToItems(m map[string]int) []item {
+	items := []item{}
+	for u, count := range m {
+		items = append(items, item{Name: u, Count: count})
+	}
+	return items
 }

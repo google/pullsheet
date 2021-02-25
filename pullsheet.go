@@ -127,7 +127,23 @@ func main() {
 		if derr != nil {
 			klog.Exitf("pull data: %v", derr)
 		}
-		out, err = leaderboard.Render(repos, users, since, until, prs)
+
+		reviews, derr := generateReviewData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+
+		issues, derr := generateIssueData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+
+		comments, derr := generateCommentsData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+
+		out, err = leaderboard.Render(repos, users, since, until, prs, reviews, issues, comments)
 	default:
 		err = fmt.Errorf("unknown kind: %q", *kindFlag)
 	}
