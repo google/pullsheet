@@ -16,9 +16,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-var (
-	notSegmentRe = regexp.MustCompile(`[/-_]+`)
-)
+var notSegmentRe = regexp.MustCompile(`[/-_]+`)
 
 // ReviewSummary a summary of a users reviews on a PR
 type ReviewSummary struct {
@@ -82,17 +80,25 @@ func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 			if isBot(i.GetUser()) {
 				continue
 			}
+
 			body := strings.TrimSpace(i.GetBody())
 			if (strings.HasPrefix(body, "/") || strings.HasPrefix(body, "cc")) && len(body) < 64 {
 				klog.Infof("ignoring tag comment: %q", body)
 				continue
 			}
 
-			klog.Infof("%s on #%d is not a bot: %q", i.GetUser().GetLogin(), pr.GetNumber(), body)
 			comments = append(comments, comment{Author: i.GetUser().GetLogin(), Body: body, CreatedAt: i.GetCreatedAt(), Review: false})
 		}
 
 		for _, c := range comments {
+			if c.CreatedAt.After(until) {
+				continue
+			}
+
+			if c.CreatedAt.Before(since) {
+				continue
+			}
+
 			if len(matchUser) > 0 && !matchUser[strings.ToLower(c.Author)] {
 				continue
 			}

@@ -44,7 +44,6 @@ var (
 )
 
 func main() {
-
 	klog.InitFlags(nil)
 	flag.Set("logtostderr", "true")
 	flag.Set("alsologtostderr", "true")
@@ -101,6 +100,8 @@ func main() {
 		out, err = generatePullData(ctx, dv, c, repos, users, since, until)
 	case "issue", "issues":
 		out, err = generateIssueData(ctx, dv, c, repos, users, since, until)
+	case "issue_comment", "issue_comments":
+		out, err = generateCommentsData(ctx, dv, c, repos, users, since, until)
 	default:
 		err = fmt.Errorf("unknown mode: %q", *modeFlag)
 	}
@@ -116,6 +117,20 @@ func generateReviewData(ctx context.Context, dv *diskv.Diskv, c *github.Client, 
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
 		rrs, err := repo.MergedReviews(ctx, dv, c, org, project, since, until, users)
+		if err != nil {
+			return "", fmt.Errorf("merged pulls: %v", err)
+		}
+		rs = append(rs, rrs...)
+	}
+
+	return gocsv.MarshalString(&rs)
+}
+
+func generateCommentsData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
+	rs := []*repo.CommentSummary{}
+	for _, r := range repos {
+		org, project := repo.ParseURL(r)
+		rrs, err := repo.IssueComments(ctx, dv, c, org, project, since, until, users)
 		if err != nil {
 			return "", fmt.Errorf("merged pulls: %v", err)
 		}
