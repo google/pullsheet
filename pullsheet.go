@@ -40,7 +40,7 @@ var (
 	usersFlag = flag.String("users", "", "comma-delimiited list of users")
 	sinceFlag = flag.String("since", "", "when to query from")
 	untilFlag = flag.String("until", "", "when to query till")
-	modeFlag  = flag.String("mode", "pr", "mode: pr, pr_comment, issue, issue_comment, leaderboard")
+	kindFlag  = flag.String("kind", "prs", "What kind of data to process: prs, reviews, issues, issue-comments, leaderboard")
 	tokenPath = flag.String("token-path", "", "GitHub token path")
 )
 
@@ -94,52 +94,48 @@ func main() {
 
 	var out string
 
-	switch *modeFlag {
-	case "pr_comment", "pr_comments":
-		data, err := generateReviewData(ctx, dv, c, repos, users, since, until)
-		if err != nil {
-			klog.Exitf("err: %v", err)
+	switch *kindFlag {
+	case "review", "reviews":
+		data, derr := generateReviewData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
 		}
 		out, err = gocsv.MarshalString(&data)
 
 	case "pr", "prs":
-		data, err := generatePullData(ctx, dv, c, repos, users, since, until)
-		if err != nil {
-			klog.Exitf("err: %v", err)
+		data, derr := generatePullData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
 		}
 		out, err = gocsv.MarshalString(&data)
 
 	case "issue", "issues":
-		data, err := generateIssueData(ctx, dv, c, repos, users, since, until)
-		if err != nil {
-			klog.Exitf("err: %v", err)
+		data, derr := generateIssueData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
 		}
 		out, err = gocsv.MarshalString(&data)
 
-	case "issue_comment", "issue_comments":
-		data, err := generateCommentsData(ctx, dv, c, repos, users, since, until)
-		if err != nil {
-			klog.Exitf("err: %v", err)
+	case "issue-comment", "issue-comments":
+		data, derr := generateCommentsData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
 		}
 		out, err = gocsv.MarshalString(&data)
 	case "leaderboard":
-		prs, err := generatePullData(ctx, dv, c, repos, users, since, until)
-		if err != nil {
-			klog.Exitf("pull data: %v", err)
+		prs, derr := generatePullData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("pull data: %v", derr)
 		}
-		bs, err := leaderboard.Render(repos, users, since, until, prs)
-		if err != nil {
-			klog.Exitf("render: %v", err)
-		}
-		out = string(bs)
-
+		out, err = leaderboard.Render(repos, users, since, until, prs)
 	default:
-		err = fmt.Errorf("unknown mode: %q", *modeFlag)
+		err = fmt.Errorf("unknown kind: %q", *kindFlag)
 	}
 
 	if err != nil {
 		klog.Exitf("generate failed: %v", err)
 	}
+	klog.Infof("%d bytes of %s output", len(out), *kindFlag)
 	fmt.Print(out)
 }
 

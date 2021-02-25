@@ -1,53 +1,57 @@
 package leaderboard
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"path"
 	"text/template"
 	"time"
 
 	"github.com/google/pullsheet/pkg/repo"
 )
 
-type Tmpl struct {
-	Title      string
-	Categories []Category
-}
-
-type Category struct {
+type category struct {
 	Title  string
-	Charts []Chart
+	Charts []chart
 }
 
-type Chart struct {
+type chart struct {
 	ID     string
 	Object string
 	Metric string
-	Items  []Item
+	Items  []item
 }
 
-type Item struct {
+type item struct {
 	Title    string
 	Quantity int
 }
 
-func Render(repos []string, users []string, since time.Time, until time.Time, prs []*repo.PRSummary) ([]byte, error) {
-
-	p := "./pkg/leaderboard/leaderboard.tmpl"
-	outTmpl, err := ioutil.ReadFile(p)
+// Render returns an HTML formatted leaderboard page
+func Render(repos []string, users []string, since time.Time, until time.Time, prs []*repo.PRSummary) (string, error) {
+	files := []string{"pkg/leaderboard/leaderboard.tmpl"}
+	name := path.Base(files[0])
+	funcMap := template.FuncMap{}
+	tmpl, err := template.New(name).Funcs(funcMap).ParseFiles(files...)
 	if err != nil {
-		return nil, fmt.Errorf("readfile: %v", err)
+		return "", fmt.Errorf("parsefiles: %v", err)
 	}
 
-	fmap := template.FuncMap{}
-	tmpl := template.Must(template.New("leaderboard").Funcs(fmap).Parse(string(outTmpl)))
-
-	ctx := Tmpl{
+	data := struct {
+		Title      string
+		Categories []category
+	}{
 		Title: "Test",
+		Categories: []category{
+			{Title: "Pull Requests"},
+		},
 	}
-	var w bytes.Buffer
-	err = tmpl.ExecuteTemplate(bufio.NewWriter(&w), "http", ctx)
-	return w.Bytes(), err
+
+	var tpl bytes.Buffer
+	if err = tmpl.Execute(&tpl, data); err != nil {
+		return "", fmt.Errorf("execute: %w", err)
+	}
+
+	out := tpl.String()
+	return out, nil
 }
