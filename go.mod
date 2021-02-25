@@ -8,6 +8,5 @@ require (
 	github.com/google/go-github/v33 v33.0.0
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	golang.org/x/oauth2 v0.0.0-20210220000619-9bb904979d93
-	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.5.0
 )

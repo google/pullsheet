@@ -12,6 +12,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
+// FilteredFiles returns a list of commit files that matter
 func FilteredFiles(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]*github.CommitFile, error) {
 	klog.Infof("Fetching file list for #%d", num)
 

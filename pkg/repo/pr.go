@@ -43,12 +43,7 @@ func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org str
 		opts.ListOptions.Page = page
 		prs, resp, err := c.PullRequests.List(ctx, org, project, opts)
 		if err != nil {
-			klog.Errorf("list failed, retrying: %v", err)
-			time.Sleep(time.Second * 1)
-			prs, resp, err = c.PullRequests.List(ctx, org, project, opts)
-			if err != nil {
-				return result, err
-			}
+			return result, err
 		}
 
 		klog.Infof("Processing page %d of %s/%s pull request results ...", page, org, project)
@@ -77,24 +72,26 @@ func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org str
 			}
 
 			klog.Infof("Fetching PR #%d by %s (updated %s): %q", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetUpdatedAt(), pr.GetTitle())
-
 			fullPR, err := ghcache.PullRequestsGet(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
 			if err != nil {
-				klog.Errorf("pull failed, retrying: %v", err)
-				time.Sleep(time.Second * 1)
-				fullPR, _, err = c.PullRequests.Get(ctx, org, project, pr.GetNumber())
-				if err != nil {
-					klog.Errorf("unable to get details for %d: %v", pr.GetNumber(), err)
-					// Accept partial credit
-					result = append(result, pr)
-					continue
-				}
+				time.Sleep(1)
+				fullPR, err = ghcache.PullRequestsGet(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
+			}
+			if err != nil {
+				klog.Errorf("failed PullRequestsGet: %v", err)
+				break
 			}
 
 			if !fullPR.GetMerged() || fullPR.GetMergeCommitSHA() == "" {
 				klog.Infof("#%d was not merged, skipping", pr.GetNumber())
 				continue
 			}
+
+			if pr.GetMergedAt().Before(since) {
+				klog.Infof("#%d was merged earlier than %s, skipping", pr.GetNumber(), since)
+				continue
+			}
+
 			result = append(result, fullPR)
 		}
 	}
@@ -119,7 +116,7 @@ type PRSummary struct {
 }
 
 // PullSummary converts GitHub PR data into a summarized view
-func PullSummary(prs map[*github.PullRequest][]*github.CommitFile, since time.Time, until time.Time, includeFileInfo bool) ([]*PRSummary, error) {
+func PullSummary(prs map[*github.PullRequest][]*github.CommitFile, since time.Time, until time.Time) ([]*PRSummary, error) {
 	sum := []*PRSummary{}
 	seen := map[string]bool{}
 
@@ -157,21 +154,16 @@ func PullSummary(prs map[*github.PullRequest][]*github.CommitFile, since time.Ti
 		paths := []string{}
 		deleted := 0
 
-		if !includeFileInfo {
-			added = pr.GetAdditions()
-			deleted = pr.GetDeletions()
-		} else {
-			for _, f := range files {
-				// These files are mostly auto-generated
-				if truncRe.MatchString(f.GetFilename()) && f.GetAdditions() > 10 {
-					klog.Infof("truncating %s from %d to %d lines added", f.GetFilename(), f.GetAdditions(), 10)
-					added += 10
-				} else {
-					added += f.GetAdditions()
-				}
-				deleted += f.GetDeletions()
-				paths = append(paths, f.GetFilename())
+		for _, f := range files {
+			// These files are mostly auto-generated
+			if truncRe.MatchString(f.GetFilename()) && f.GetAdditions() > 10 {
+				klog.Infof("truncating %s from %d to %d lines added", f.GetFilename(), f.GetAdditions(), 10)
+				added += 10
+			} else {
+				added += f.GetAdditions()
 			}
+			deleted += f.GetDeletions()
+			paths = append(paths, f.GetFilename())
 		}
 
 		sum = append(sum, &PRSummary{
