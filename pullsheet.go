@@ -39,7 +39,7 @@ var (
 	usersFlag = flag.String("users", "", "comma-delimiited list of users")
 	sinceFlag = flag.String("since", "", "when to query from")
 	untilFlag = flag.String("until", "", "when to query till")
-	modeFlag  = flag.String("mode", "pr", "mode: pr, pr_comment, issue, issue_comment")
+	kindFlag  = flag.String("kind", "prs", "What kind of data to process: prs, reviews, issues, issue-comments")
 	tokenPath = flag.String("token-path", "", "GitHub token path")
 )
 
@@ -93,17 +93,17 @@ func main() {
 
 	var out string
 
-	switch *modeFlag {
-	case "pr_comment", "pr_comments":
+	switch *kindFlag {
+	case "review", "reviews":
 		out, err = generateReviewData(ctx, dv, c, repos, users, since, until)
 	case "pr", "prs":
 		out, err = generatePullData(ctx, dv, c, repos, users, since, until)
 	case "issue", "issues":
 		out, err = generateIssueData(ctx, dv, c, repos, users, since, until)
-	case "issue_comment", "issue_comments":
+	case "issue_comment", "issue_comments", "issue-comment", "issue-comments":
 		out, err = generateCommentsData(ctx, dv, c, repos, users, since, until)
 	default:
-		err = fmt.Errorf("unknown mode: %q", *modeFlag)
+		err = fmt.Errorf("unknown mode: %q", *kindFlag)
 	}
 
 	if err != nil {
