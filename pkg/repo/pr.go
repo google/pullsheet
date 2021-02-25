@@ -66,6 +66,10 @@ func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org str
 				continue
 			}
 
+			if isBot(pr.GetUser()) {
+				continue
+			}
+
 			if pr.GetState() != "closed" {
 				klog.Infof("Skipping PR#%d by %s (state=%q)", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetState())
 				continue

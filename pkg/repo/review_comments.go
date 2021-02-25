@@ -164,7 +164,11 @@ func isBot(u *github.User) bool {
 		return true
 	}
 
-	if strings.HasSuffix(u.GetLogin(), "-bot") || strings.HasSuffix(u.GetLogin(), "-robot") || strings.HasSuffix(u.GetLogin(), "_bot") || strings.HasSuffix(u.GetLogin(), "_robot") {
+	if strings.HasSuffix(u.GetLogin(), "bot") {
+		return true
+	}
+
+	if strings.Contains(u.GetLogin(), "[bot]") {
 		return true
 	}
 

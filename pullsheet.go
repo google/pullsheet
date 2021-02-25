@@ -26,6 +26,7 @@ import (
 	"github.com/gocarina/gocsv"
 	"github.com/google/go-github/v33/github"
 	"github.com/google/pullsheet/pkg/ghcache"
+	"github.com/google/pullsheet/pkg/leaderboard"
 	"github.com/google/pullsheet/pkg/repo"
 	"github.com/peterbourgon/diskv"
 	"golang.org/x/oauth2"
@@ -39,7 +40,7 @@ var (
 	usersFlag = flag.String("users", "", "comma-delimiited list of users")
 	sinceFlag = flag.String("since", "", "when to query from")
 	untilFlag = flag.String("until", "", "when to query till")
-	kindFlag  = flag.String("kind", "prs", "What kind of data to process: prs, reviews, issues, issue-comments")
+	kindFlag  = flag.String("kind", "prs", "What kind of data to process: prs, reviews, issues, issue-comments, leaderboard")
 	tokenPath = flag.String("token-path", "", "GitHub token path")
 )
 
@@ -95,52 +96,93 @@ func main() {
 
 	switch *kindFlag {
 	case "review", "reviews":
-		out, err = generateReviewData(ctx, dv, c, repos, users, since, until)
+		data, derr := generateReviewData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+		out, err = gocsv.MarshalString(&data)
+
 	case "pr", "prs":
-		out, err = generatePullData(ctx, dv, c, repos, users, since, until)
+		data, derr := generatePullData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+		out, err = gocsv.MarshalString(&data)
+
 	case "issue", "issues":
-		out, err = generateIssueData(ctx, dv, c, repos, users, since, until)
-	case "issue_comment", "issue_comments", "issue-comment", "issue-comments":
-		out, err = generateCommentsData(ctx, dv, c, repos, users, since, until)
+		data, derr := generateIssueData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+		out, err = gocsv.MarshalString(&data)
+
+	case "issue-comment", "issue-comments":
+		data, derr := generateCommentsData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+		out, err = gocsv.MarshalString(&data)
+	case "leaderboard":
+		prs, derr := generatePullData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("pull data: %v", derr)
+		}
+
+		reviews, derr := generateReviewData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+
+		issues, derr := generateIssueData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+
+		comments, derr := generateCommentsData(ctx, dv, c, repos, users, since, until)
+		if derr != nil {
+			klog.Exitf("err: %v", derr)
+		}
+
+		out, err = leaderboard.Render(repos, users, since, until, prs, reviews, issues, comments)
 	default:
-		err = fmt.Errorf("unknown mode: %q", *kindFlag)
+		err = fmt.Errorf("unknown kind: %q", *kindFlag)
 	}
 
 	if err != nil {
 		klog.Exitf("generate failed: %v", err)
 	}
+	klog.Infof("%d bytes of %s output", len(out), *kindFlag)
 	fmt.Print(out)
 }
 
-func generateReviewData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
+func generateReviewData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.ReviewSummary, error) {
 	rs := []*repo.ReviewSummary{}
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
 		rrs, err := repo.MergedReviews(ctx, dv, c, org, project, since, until, users)
 		if err != nil {
-			return "", fmt.Errorf("merged pulls: %v", err)
+			return nil, fmt.Errorf("merged pulls: %v", err)
 		}
 		rs = append(rs, rrs...)
 	}
-
-	return gocsv.MarshalString(&rs)
+	return rs, nil
 }
 
-func generateCommentsData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
+func generateCommentsData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.CommentSummary, error) {
 	rs := []*repo.CommentSummary{}
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
 		rrs, err := repo.IssueComments(ctx, dv, c, org, project, since, until, users)
 		if err != nil {
-			return "", fmt.Errorf("merged pulls: %v", err)
+			return nil, fmt.Errorf("merged pulls: %v", err)
 		}
 		rs = append(rs, rrs...)
 	}
 
-	return gocsv.MarshalString(&rs)
+	return rs, nil
 }
 
-func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
+func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.PRSummary, error) {
 	prFiles := map[*github.PullRequest][]*github.CommitFile{}
 
 	for _, r := range repos {
@@ -148,7 +190,7 @@ func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, re
 
 		prs, err := repo.MergedPulls(ctx, dv, c, org, project, since, until, users)
 		if err != nil {
-			return "", fmt.Errorf("list: %v", err)
+			return nil, fmt.Errorf("list: %v", err)
 		}
 
 		for _, pr := range prs {
@@ -166,22 +208,21 @@ func generatePullData(ctx context.Context, dv *diskv.Diskv, c *github.Client, re
 
 	sum, err := repo.PullSummary(prFiles, since, until)
 	if err != nil {
-		return "", fmt.Errorf("pull summary failed: %v", err)
+		return nil, fmt.Errorf("pull summary failed: %v", err)
 	}
-
-	return gocsv.MarshalString(&sum)
+	return sum, nil
 }
 
-func generateIssueData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) (string, error) {
+func generateIssueData(ctx context.Context, dv *diskv.Diskv, c *github.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.IssueSummary, error) {
 	rs := []*repo.IssueSummary{}
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
 		rrs, err := repo.ClosedIssues(ctx, dv, c, org, project, since, until, users)
 		if err != nil {
-			return "", fmt.Errorf("merged pulls: %v", err)
+			return nil, fmt.Errorf("merged pulls: %v", err)
 		}
 		rs = append(rs, rrs...)
 	}
 
-	return gocsv.MarshalString(&rs)
+	return rs, nil
 }
