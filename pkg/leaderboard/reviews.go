@@ -12,8 +12,8 @@ func reviewsChart(reviews []*repo.ReviewSummary) chart {
 
 	return chart{
 		ID:     "reviewCounts",
-		Title:  "Top PR Reviewers",
-		Metric: "Pull Requests Reviewed",
+		Title:  "Most Influential",
+		Metric: "# of Pull Requests Reviewed",
 		Items:  topItems(mapToItems(uMap)),
 	}
 }
@@ -26,8 +26,8 @@ func reviewCommentsChart(reviews []*repo.ReviewSummary) chart {
 
 	return chart{
 		ID:     "reviewComments",
-		Title:  "Most Nitpicky Reviewers",
-		Metric: "Review Comments",
+		Title:  "Most Demanding",
+		Metric: "# of Review Comments",
 		Items:  topItems(mapToItems(uMap)),
 	}
 }
@@ -40,8 +40,8 @@ func reviewWordsChart(reviews []*repo.ReviewSummary) chart {
 
 	return chart{
 		ID:     "reviewWords",
-		Title:  "Most Helpful Reviewers",
-		Metric: "Review Words",
+		Title:  "Most Helpful",
+		Metric: "# of words written",
 		Items:  topItems(mapToItems(uMap)),
 	}
 }

@@ -41,6 +41,7 @@ var (
 	sinceFlag = flag.String("since", "", "when to query from")
 	untilFlag = flag.String("until", "", "when to query till")
 	kindFlag  = flag.String("kind", "prs", "What kind of data to process: prs, reviews, issues, issue-comments, leaderboard")
+	titleFlag = flag.String("title", "", "Title to use for output pages")
 	tokenPath = flag.String("token-path", "", "GitHub token path")
 )
 
@@ -143,7 +144,11 @@ func main() {
 			klog.Exitf("err: %v", derr)
 		}
 
-		out, err = leaderboard.Render(repos, users, since, until, prs, reviews, issues, comments)
+		title := *titleFlag
+		if title == "" {
+			title = strings.Join(repos, ", ")
+		}
+		out, err = leaderboard.Render(title, since, until, prs, reviews, issues, comments)
 	default:
 		err = fmt.Errorf("unknown kind: %q", *kindFlag)
 	}
