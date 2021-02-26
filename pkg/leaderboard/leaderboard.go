@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -39,10 +38,8 @@ type item struct {
 
 // Render returns an HTML formatted leaderboard page
 func Render(title string, since time.Time, until time.Time, prs []*repo.PRSummary, reviews []*repo.ReviewSummary, issues []*repo.IssueSummary, comments []*repo.CommentSummary) (string, error) {
-	files := []string{"pkg/leaderboard/leaderboard.tmpl"}
-	name := path.Base(files[0])
 	funcMap := template.FuncMap{}
-	tmpl, err := template.New(name).Funcs(funcMap).ParseFiles(files...)
+	tmpl, err := template.New("LeaderBoard").Funcs(funcMap).Parse(leaderboardTmpl)
 	if err != nil {
 		return "", fmt.Errorf("parsefiles: %v", err)
 	}
