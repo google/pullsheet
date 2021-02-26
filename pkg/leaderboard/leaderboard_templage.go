@@ -1,8 +1,10 @@
-<html>
+package leaderboard
+
+const leaderboardTmpl = `<html>
 <head>
     <title>{{ .Title }} - Leaderboard</title>
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
         google.charts.load("current", {packages:["corechart"]});
@@ -18,12 +20,12 @@
       color: rgba(66,133,244);
       margin-bottom: 0em;
     }
- 
+
     .subtitle {
       color: rgba(23,90,201);
       font-size: small;
     }
-    
+
     pre {
         white-space: pre-wrap;
         word-wrap: break-word;
@@ -126,3 +128,4 @@
     {{ end}}
 </body>
 </html>
+`
