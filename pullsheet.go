@@ -53,7 +53,7 @@ func main() {
 	flag.Parse()
 
 	if *reposFlag == "" || *sinceFlag == "" || *tokenPath == "" {
-		fmt.Println("usage: pullsheet --repos <repository> --since 2006-01-02 --token <github token> [--users=<user>]")
+		fmt.Println("usage: pullsheet --repos <repository> --since 2006-01-02 --token-path <github token path> [--users=<user>]")
 		os.Exit(2)
 	}
 
