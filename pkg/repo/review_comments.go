@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package repo
 
 import (
@@ -11,9 +25,10 @@ import (
 
 	"github.com/blevesearch/segment"
 	"github.com/google/go-github/v33/github"
+	"github.com/sirupsen/logrus"
+
+	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
-	"github.com/peterbourgon/diskv"
-	"k8s.io/klog/v2"
 )
 
 var notSegmentRe = regexp.MustCompile(`[/-_]+`)
@@ -39,13 +54,13 @@ type comment struct {
 }
 
 // MergedReviews returns a list of pull requests in a project (merged only)
-func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*ReviewSummary, error) {
-	prs, err := MergedPulls(ctx, dv, c, org, project, since, until, nil)
+func MergedReviews(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*ReviewSummary, error) {
+	prs, err := MergedPulls(ctx, c, org, project, since, until, nil)
 	if err != nil {
 		return nil, fmt.Errorf("pulls: %v", err)
 	}
 
-	klog.Infof("found %d PR's in %s/%s to find reviews for", len(prs), org, project)
+	logrus.Infof("found %d PR's in %s/%s to find reviews for", len(prs), org, project)
 	reviews := []*ReviewSummary{}
 
 	matchUser := map[string]bool{}
@@ -59,7 +74,7 @@ func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 		comments := []comment{}
 
 		// There is wickedness in the GitHub API: PR comments are available via the Issues API, and PR *review* comments are available via the PullRequests API
-		cs, err := ghcache.PullRequestsListComments(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
+		cs, err := ghcache.PullRequestsListComments(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +87,7 @@ func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 			comments = append(comments, comment{Author: c.GetUser().GetLogin(), Body: body, CreatedAt: c.GetCreatedAt(), Review: true})
 		}
 
-		is, err := ghcache.IssuesListComments(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
+		is, err := ghcache.IssuesListComments(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +98,7 @@ func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 
 			body := strings.TrimSpace(i.GetBody())
 			if (strings.HasPrefix(body, "/") || strings.HasPrefix(body, "cc")) && len(body) < 64 {
-				klog.Infof("ignoring tag comment in %s: %q", i.GetHTMLURL(), body)
+				logrus.Infof("ignoring tag comment in %s: %q", i.GetHTMLURL(), body)
 				continue
 			}
 
@@ -127,7 +142,7 @@ func MergedReviews(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 
 			prMap[c.Author].Date = c.CreatedAt.Format(dateForm)
 			prMap[c.Author].Words += wordCount
-			klog.Infof("%d word comment by %s: %q for %s/%s #%d", wordCount, c.Author, strings.TrimSpace(c.Body), org, project, pr.GetNumber())
+			logrus.Infof("%d word comment by %s: %q for %s/%s #%d", wordCount, c.Author, strings.TrimSpace(c.Body), org, project, pr.GetNumber())
 		}
 
 		for _, rs := range prMap {

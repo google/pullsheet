@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package repo
 
 import (
@@ -6,9 +20,10 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
+	"github.com/sirupsen/logrus"
+
+	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
-	"github.com/peterbourgon/diskv"
-	"k8s.io/klog/v2"
 )
 
 // IssueSummary is a summary of a single PR
@@ -23,9 +38,9 @@ type IssueSummary struct {
 }
 
 // ClosedIssues returns a list of closed issues within a project
-func ClosedIssues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*IssueSummary, error) {
+func ClosedIssues(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*IssueSummary, error) {
 	var result []*IssueSummary
-	closed, err := issues(ctx, dv, c, org, project, since, until, users, "closed")
+	closed, err := issues(ctx, c, org, project, since, until, users, "closed")
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +55,12 @@ func ClosedIssues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org st
 			Title:   i.GetTitle(),
 		})
 	}
+
 	return result, nil
 }
 
 // issues returns a list of issues in a project
-func issues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, project string, since time.Time, until time.Time, users []string, state string) ([]*github.Issue, error) {
+func issues(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string, state string) ([]*github.Issue, error) {
 	result := []*github.Issue{}
 	opts := &github.IssueListByRepoOptions{
 		State:     state,
@@ -60,30 +76,30 @@ func issues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, 
 		matchUser[strings.ToLower(u)] = true
 	}
 
-	klog.Infof("Gathering issues for %s/%s, users=%q: %+v", org, project, users, opts)
+	logrus.Infof("Gathering issues for %s/%s, users=%q: %+v", org, project, users, opts)
 	for page := 1; page != 0; {
 		opts.ListOptions.Page = page
-		issues, resp, err := c.Issues.ListByRepo(ctx, org, project, opts)
+		issues, resp, err := c.GitHubClient.Issues.ListByRepo(ctx, org, project, opts)
 		if err != nil {
 			return result, err
 		}
 
-		klog.Infof("Processing page %d of %s/%s issue results ...", page, org, project)
+		logrus.Infof("Processing page %d of %s/%s issue results ...", page, org, project)
 
 		page = resp.NextPage
-		klog.Infof("Current issue updated at %s", issues[0].GetUpdatedAt())
+		logrus.Infof("Current issue updated at %s", issues[0].GetUpdatedAt())
 
 		for _, i := range issues {
 			if i.IsPullRequest() {
 				continue
 			}
 			if i.GetClosedAt().After(until) {
-				klog.Infof("issue #d closed at %s", i.GetNumber(), i.GetUpdatedAt())
+				logrus.Infof("issue #d closed at %s", i.GetNumber(), i.GetUpdatedAt())
 				continue
 			}
 
 			if i.GetUpdatedAt().Before(since) {
-				klog.Infof("Hit issue #%d updated at %s", i.GetNumber(), i.GetUpdatedAt())
+				logrus.Infof("Hit issue #%d updated at %s", i.GetNumber(), i.GetUpdatedAt())
 				page = 0
 				break
 			}
@@ -93,21 +109,21 @@ func issues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, 
 			}
 
 			if state != "" && i.GetState() != state {
-				klog.Infof("Skipping issue #%d (state=%q)", i.GetNumber(), i.GetState())
+				logrus.Infof("Skipping issue #%d (state=%q)", i.GetNumber(), i.GetState())
 				continue
 			}
 
 			t := issueDate(i)
 
-			klog.Infof("Fetching #%d (closed %s, updated %s): %q", i.GetNumber(), i.GetClosedAt().Format(dateForm), i.GetUpdatedAt().Format(dateForm), i.GetTitle())
+			logrus.Infof("Fetching #%d (closed %s, updated %s): %q", i.GetNumber(), i.GetClosedAt().Format(dateForm), i.GetUpdatedAt().Format(dateForm), i.GetTitle())
 
-			full, err := ghcache.IssuesGet(ctx, dv, c, t, org, project, i.GetNumber())
+			full, err := ghcache.IssuesGet(ctx, c.Cache, c.GitHubClient, t, org, project, i.GetNumber())
 			if err != nil {
 				time.Sleep(1)
-				full, err = ghcache.IssuesGet(ctx, dv, c, t, org, project, i.GetNumber())
+				full, err = ghcache.IssuesGet(ctx, c.Cache, c.GitHubClient, t, org, project, i.GetNumber())
 			}
 			if err != nil {
-				klog.Errorf("failed IssuesGet: %v", err)
+				logrus.Errorf("failed IssuesGet: %v", err)
 				break
 			}
 
@@ -120,7 +136,8 @@ func issues(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, 
 			result = append(result, full)
 		}
 	}
-	klog.Infof("Returning %d issues", len(result))
+
+	logrus.Infof("Returning %d issues", len(result))
 	return result, nil
 }
 
@@ -132,5 +149,6 @@ func issueDate(i *github.Issue) time.Time {
 	if t.IsZero() {
 		t = i.GetCreatedAt()
 	}
+
 	return t
 }
