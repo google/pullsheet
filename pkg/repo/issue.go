@@ -39,12 +39,12 @@ type IssueSummary struct {
 
 // ClosedIssues returns a list of closed issues within a project
 func ClosedIssues(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*IssueSummary, error) {
-	var result []*IssueSummary
 	closed, err := issues(ctx, c, org, project, since, until, users, "closed")
 	if err != nil {
 		return nil, err
 	}
 
+	result := make([]*IssueSummary, 0, len(closed))
 	for _, i := range closed {
 		result = append(result, &IssueSummary{
 			URL:     i.GetHTMLURL(),
@@ -94,7 +94,7 @@ func issues(ctx context.Context, c *client.Client, org string, project string, s
 				continue
 			}
 			if i.GetClosedAt().After(until) {
-				logrus.Infof("issue #d closed at %s", i.GetNumber(), i.GetUpdatedAt())
+				logrus.Infof("issue #%d closed at %s", i.GetNumber(), i.GetUpdatedAt())
 				continue
 			}
 
@@ -119,7 +119,7 @@ func issues(ctx context.Context, c *client.Client, org string, project string, s
 
 			full, err := ghcache.IssuesGet(ctx, c.Cache, c.GitHubClient, t, org, project, i.GetNumber())
 			if err != nil {
-				time.Sleep(1)
+				time.Sleep(1 * time.Second)
 				full, err = ghcache.IssuesGet(ctx, c.Cache, c.GitHubClient, t, org, project, i.GetNumber())
 			}
 			if err != nil {

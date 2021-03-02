@@ -20,13 +20,14 @@ import (
 )
 
 // ParseURL returns the organization and project for a URL or partial path
-func ParseURL(rawURL string) (string, string) {
+func ParseURL(rawURL string) (org string, project string) {
 	u, err := url.Parse(rawURL)
 	if err == nil {
 		p := strings.Split(u.Path, "/")
 		if u.Hostname() != "" {
 			return p[1], p[2]
 		}
+
 		return p[0], p[1]
 	}
 	// Not a URL
