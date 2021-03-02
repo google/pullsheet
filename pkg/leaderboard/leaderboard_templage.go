@@ -109,7 +109,7 @@ const leaderboardTmpl = `<html>
             <div class="board">
             <h3>{{ .Title }}</h3>
             <p>{{ .Metric }}</p>
-            <div id="chart_{{ .ID }}" style="width: 320px; height: 400px;"></div>
+            <div id="chart_{{ .ID }}" style="width: 450px; height: 350px;"></div>
             <script type="text/javascript">
                 google.charts.setOnLoadCallback(draw{{ .ID}});
 
@@ -130,7 +130,7 @@ const leaderboardTmpl = `<html>
                         }
                     },
                     legend: { position: "none" },
-                    bar: { groupWidth: "95%" }
+                    bar: { groupWidth: "85%" }
                     };
 
                    var chart = new google.visualization.BarChart(document.getElementById('chart_{{.ID }}'));

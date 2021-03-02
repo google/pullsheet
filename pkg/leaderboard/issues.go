@@ -16,13 +16,16 @@ package leaderboard
 
 import (
 	"github.com/google/pullsheet/pkg/repo"
+	"strings"
 )
 
 func issueCloserChart(is []*repo.IssueSummary) chart {
 	uMap := map[string]int{}
 	for _, i := range is {
 		if i.Author != i.Closer {
-			uMap[i.Closer]++
+			if !strings.HasSuffix(i.Closer, "bot") {
+				uMap[i.Closer]++
+			}
 		}
 	}
 
