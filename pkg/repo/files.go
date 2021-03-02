@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package repo
 
 import (
@@ -7,28 +21,30 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
+	"github.com/sirupsen/logrus"
+
+	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
-	"github.com/peterbourgon/diskv"
-	"k8s.io/klog/v2"
 )
 
 // FilteredFiles returns a list of commit files that matter
-func FilteredFiles(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]*github.CommitFile, error) {
-	klog.Infof("Fetching file list for #%d", num)
+func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org string, project string, num int) ([]*github.CommitFile, error) {
+	logrus.Infof("Fetching file list for #%d", num)
 
 	var files []*github.CommitFile
-	changed, err := ghcache.PullRequestsListFiles(ctx, dv, c, t, org, project, num)
+	changed, err := ghcache.PullRequestsListFiles(ctx, c.Cache, c.GitHubClient, t, org, project, num)
 	if err != nil {
 		return files, err
 	}
 
 	for _, cf := range changed {
 		if ignorePathRe.MatchString(cf.GetFilename()) {
-			klog.Infof("ignoring %s", cf.GetFilename())
+			logrus.Infof("ignoring %s", cf.GetFilename())
 			continue
 		}
 		files = append(files, &cf)
 	}
+
 	return files, err
 }
 
@@ -43,7 +59,7 @@ func prType(files []*github.CommitFile) string {
 			if result == "" {
 				result = "docs"
 			}
-			klog.Infof("%s: %s", f, result)
+			logrus.Infof("%s: %s", f, result)
 			continue
 		}
 
@@ -51,7 +67,7 @@ func prType(files []*github.CommitFile) string {
 			if result == "" {
 				result = "tests"
 			}
-			klog.Infof("%s: %s", f, result)
+			logrus.Infof("%s: %s", f, result)
 			continue
 		}
 
@@ -67,11 +83,12 @@ func prType(files []*github.CommitFile) string {
 			result = "frontend"
 		}
 
-		klog.Infof("%s (ext=%s): %s", f, ext, result)
+		logrus.Infof("%s (ext=%s): %s", f, ext, result)
 	}
 
 	if result == "" {
 		return "unknown"
 	}
+
 	return result
 }

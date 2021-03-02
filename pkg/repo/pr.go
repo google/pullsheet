@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package repo
 
 import (
@@ -7,9 +21,10 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
+	"github.com/sirupsen/logrus"
+
+	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
-	"github.com/peterbourgon/diskv"
-	"k8s.io/klog/v2"
 )
 
 const dateForm = "2006-01-02"
@@ -21,7 +36,7 @@ var (
 )
 
 // MergedPulls returns a list of pull requests in a project
-func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*github.PullRequest, error) {
+func MergedPulls(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*github.PullRequest, error) {
 	var result []*github.PullRequest
 
 	opts := &github.PullRequestListOptions{
@@ -38,26 +53,26 @@ func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org str
 		matchUser[strings.ToLower(u)] = true
 	}
 
-	klog.Infof("Gathering pull requests for %s/%s, users=%q: %+v", org, project, users, opts)
+	logrus.Infof("Gathering pull requests for %s/%s, users=%q: %+v", org, project, users, opts)
 	for page := 1; page != 0; {
 		opts.ListOptions.Page = page
-		prs, resp, err := c.PullRequests.List(ctx, org, project, opts)
+		prs, resp, err := c.GitHubClient.PullRequests.List(ctx, org, project, opts)
 		if err != nil {
 			return result, err
 		}
 
-		klog.Infof("Processing page %d of %s/%s pull request results (looking for %s)...", page, org, project, since)
+		logrus.Infof("Processing page %d of %s/%s pull request results (looking for %s)...", page, org, project, since)
 
 		page = resp.NextPage
-		klog.Infof("Current PR updated at %s", prs[0].GetUpdatedAt())
+		logrus.Infof("Current PR updated at %s", prs[0].GetUpdatedAt())
 		for _, pr := range prs {
 			if pr.GetClosedAt().After(until) {
-				klog.Infof("PR#d closed at %s", pr.GetNumber(), pr.GetUpdatedAt())
+				logrus.Infof("PR#d closed at %s", pr.GetNumber(), pr.GetUpdatedAt())
 				continue
 			}
 
 			if pr.GetUpdatedAt().Before(since) {
-				klog.Infof("Hit PR#%d updated at %s", pr.GetNumber(), pr.GetUpdatedAt())
+				logrus.Infof("Hit PR#%d updated at %s", pr.GetNumber(), pr.GetUpdatedAt())
 				page = 0
 				break
 			}
@@ -76,35 +91,35 @@ func MergedPulls(ctx context.Context, dv *diskv.Diskv, c *github.Client, org str
 			}
 
 			if pr.GetState() != "closed" {
-				klog.Infof("Skipping PR#%d by %s (state=%q)", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetState())
+				logrus.Infof("Skipping PR#%d by %s (state=%q)", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetState())
 				continue
 			}
 
-			klog.Infof("Fetching PR #%d by %s (updated %s): %q", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetUpdatedAt(), pr.GetTitle())
-			fullPR, err := ghcache.PullRequestsGet(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
+			logrus.Infof("Fetching PR #%d by %s (updated %s): %q", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetUpdatedAt(), pr.GetTitle())
+			fullPR, err := ghcache.PullRequestsGet(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
 			if err != nil {
 				time.Sleep(1)
-				fullPR, err = ghcache.PullRequestsGet(ctx, dv, c, pr.GetMergedAt(), org, project, pr.GetNumber())
+				fullPR, err = ghcache.PullRequestsGet(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
 			}
 			if err != nil {
-				klog.Errorf("failed PullRequestsGet: %v", err)
+				logrus.Errorf("failed PullRequestsGet: %v", err)
 				break
 			}
 
 			if !fullPR.GetMerged() || fullPR.GetMergeCommitSHA() == "" {
-				klog.Infof("#%d was not merged, skipping", pr.GetNumber())
+				logrus.Infof("#%d was not merged, skipping", pr.GetNumber())
 				continue
 			}
 
 			if pr.GetMergedAt().Before(since) {
-				klog.Infof("#%d was merged earlier than %s, skipping", pr.GetNumber(), since)
+				logrus.Infof("#%d was merged earlier than %s, skipping", pr.GetNumber(), since)
 				continue
 			}
 
 			result = append(result, fullPR)
 		}
 	}
-	klog.Infof("Returning %d pull request results", len(result))
+	logrus.Infof("Returning %d pull request results", len(result))
 	return result, nil
 }
 
@@ -131,7 +146,7 @@ func PullSummary(prs map[*github.PullRequest][]*github.CommitFile, since time.Ti
 
 	for pr, files := range prs {
 		if seen[pr.GetHTMLURL()] {
-			klog.Infof("skipping seen issue: %s", pr.GetHTMLURL())
+			logrus.Infof("skipping seen issue: %s", pr.GetHTMLURL())
 			continue
 		}
 		seen[pr.GetHTMLURL()] = true
@@ -150,12 +165,12 @@ func PullSummary(prs map[*github.PullRequest][]*github.CommitFile, since time.Ti
 		}
 
 		if t.After(until) {
-			klog.Infof("skipping %s - closed at %s, after %s", pr.GetHTMLURL(), t, until)
+			logrus.Infof("skipping %s - closed at %s, after %s", pr.GetHTMLURL(), t, until)
 			continue
 		}
 
 		if t.Before(since) {
-			klog.Infof("skipping %s - closed at %s, before %s", pr.GetHTMLURL(), t, since)
+			logrus.Infof("skipping %s - closed at %s, before %s", pr.GetHTMLURL(), t, since)
 			continue
 		}
 
@@ -166,7 +181,7 @@ func PullSummary(prs map[*github.PullRequest][]*github.CommitFile, since time.Ti
 		for _, f := range files {
 			// These files are mostly auto-generated
 			if truncRe.MatchString(f.GetFilename()) && f.GetAdditions() > 10 {
-				klog.Infof("truncating %s from %d to %d lines added", f.GetFilename(), f.GetAdditions(), 10)
+				logrus.Infof("truncating %s from %d to %d lines added", f.GetFilename(), f.GetAdditions(), 10)
 				added += 10
 			} else {
 				added += f.GetAdditions()

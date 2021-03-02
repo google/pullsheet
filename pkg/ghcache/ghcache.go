@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package ghcache
 
 import (
@@ -10,9 +24,8 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
-
 	"github.com/peterbourgon/diskv"
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -31,7 +44,7 @@ func PullRequestsGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t t
 	key := fmt.Sprintf("pr-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
 	val, err := read(dv, key)
 	if err != nil {
-		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		logrus.Debugf("cache miss for %v: %s", key, err)
 		pr, _, err := c.PullRequests.Get(ctx, org, project, num)
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
@@ -39,7 +52,7 @@ func PullRequestsGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t t
 		return pr, save(dv, key, blob{PullRequest: *pr})
 	}
 
-	klog.V(1).Infof("cache hit: %v", key)
+	logrus.Debugf("cache hit: %v", key)
 	return &val.PullRequest, nil
 }
 
@@ -47,7 +60,7 @@ func PullRequestsListFiles(ctx context.Context, dv *diskv.Diskv, c *github.Clien
 	key := fmt.Sprintf("pr-listfiles-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
 	val, err := read(dv, key)
 	if err != nil {
-		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		logrus.Debugf("cache miss for %v: %s", key, err)
 		fsp, _, err := c.PullRequests.ListFiles(ctx, org, project, num, &github.ListOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
@@ -59,7 +72,7 @@ func PullRequestsListFiles(ctx context.Context, dv *diskv.Diskv, c *github.Clien
 		return fs, save(dv, key, blob{CommitFiles: fs})
 	}
 
-	klog.V(1).Infof("cache hit: %v", key)
+	logrus.Debugf("cache hit: %v", key)
 	return val.CommitFiles, nil
 }
 
@@ -67,7 +80,7 @@ func PullRequestsListComments(ctx context.Context, dv *diskv.Diskv, c *github.Cl
 	key := fmt.Sprintf("pr-comments-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
 	val, err := read(dv, key)
 	if err != nil {
-		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		logrus.Debugf("cache miss for %v: %s", key, err)
 		csp, _, err := c.PullRequests.ListComments(ctx, org, project, num, &github.PullRequestListCommentsOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
@@ -79,7 +92,7 @@ func PullRequestsListComments(ctx context.Context, dv *diskv.Diskv, c *github.Cl
 		return cs, save(dv, key, blob{PullRequestComments: cs})
 	}
 
-	klog.V(1).Infof("cache hit: %v", key)
+	logrus.Debugf("cache hit: %v", key)
 	return val.PullRequestComments, nil
 }
 
@@ -87,7 +100,7 @@ func IssuesGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Ti
 	key := fmt.Sprintf("issue-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
 	val, err := read(dv, key)
 	if err != nil {
-		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		logrus.Debugf("cache miss for %v: %s", key, err)
 		i, _, err := c.Issues.Get(ctx, org, project, num)
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
@@ -95,7 +108,7 @@ func IssuesGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Ti
 		return i, save(dv, key, blob{Issue: *i})
 	}
 
-	klog.V(1).Infof("cache hit: %v", key)
+	logrus.Debugf("cache hit: %v", key)
 	return &val.Issue, nil
 }
 
@@ -103,7 +116,7 @@ func IssuesListComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, 
 	key := fmt.Sprintf("issue-comments-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
 	val, err := read(dv, key)
 	if err != nil {
-		klog.V(1).Infof("cache miss for %v: %s", key, err)
+		logrus.Debugf("cache miss for %v: %s", key, err)
 		csp, _, err := c.Issues.ListComments(ctx, org, project, num, &github.IssueListCommentsOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
@@ -115,7 +128,7 @@ func IssuesListComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, 
 		return cs, save(dv, key, blob{IssueComments: cs})
 	}
 
-	klog.V(1).Infof("cache hit: %v", key)
+	logrus.Debugf("cache hit: %v", key)
 	return val.IssueComments, nil
 }
 
@@ -158,7 +171,7 @@ func initialize() (*diskv.Diskv, error) {
 		return nil, fmt.Errorf("mkdir: %w", err)
 	}
 
-	klog.Infof("cache dir is %s", cacheDir)
+	logrus.Infof("cache dir is %s", cacheDir)
 
 	return diskv.New(diskv.Options{
 		BasePath:     cacheDir,
