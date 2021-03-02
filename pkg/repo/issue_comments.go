@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package repo
 
 import (
@@ -6,10 +20,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v33/github"
+	"github.com/sirupsen/logrus"
+
+	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
-	"github.com/peterbourgon/diskv"
-	"k8s.io/klog/v2"
 )
 
 // CommentSummary a summary of a users reviews on an issue
@@ -26,13 +40,13 @@ type CommentSummary struct {
 }
 
 // IssueComments returns a list of issue comment summaries
-func IssueComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*CommentSummary, error) {
-	is, err := issues(ctx, dv, c, org, project, since, until, nil, "")
+func IssueComments(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*CommentSummary, error) {
+	is, err := issues(ctx, c, org, project, since, until, nil, "")
 	if err != nil {
 		return nil, fmt.Errorf("issues: %v", err)
 	}
 
-	klog.Infof("found %d issues to check comments on", len(is))
+	logrus.Infof("found %d issues to check comments on", len(is))
 	reviews := []*CommentSummary{}
 
 	matchUser := map[string]bool{}
@@ -48,7 +62,7 @@ func IssueComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 		// username -> summary
 		iMap := map[string]*CommentSummary{}
 
-		cs, err := ghcache.IssuesListComments(ctx, dv, c, issueDate(i), org, project, i.GetNumber())
+		cs, err := ghcache.IssuesListComments(ctx, c.Cache, c.GitHubClient, issueDate(i), org, project, i.GetNumber())
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +91,7 @@ func IssueComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 
 			body := strings.TrimSpace(i.GetBody())
 			if (strings.HasPrefix(body, "/") || strings.HasPrefix(body, "cc")) && len(body) < 64 {
-				klog.Infof("ignoring tag comment: %q", body)
+				logrus.Infof("ignoring tag comment: %q", body)
 				continue
 			}
 
@@ -97,7 +111,7 @@ func IssueComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, org s
 			iMap[commenter].Comments++
 			iMap[commenter].Date = c.CreatedAt.Format(dateForm)
 			iMap[commenter].Words += wordCount
-			klog.Infof("%d word comment by %s: %q for %s/%s #%d", wordCount, commenter, strings.TrimSpace(c.GetBody()), org, project, i.GetNumber())
+			logrus.Infof("%d word comment by %s: %q for %s/%s #%d", wordCount, commenter, strings.TrimSpace(c.GetBody()), org, project, i.GetNumber())
 		}
 
 		for _, rs := range iMap {
