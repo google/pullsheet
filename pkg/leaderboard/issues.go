@@ -20,10 +20,18 @@ import (
 	"github.com/google/pullsheet/pkg/repo"
 )
 
-func issueCloserChart(is []*repo.IssueSummary) chart {
+func issueCloserChart(is []*repo.IssueSummary, users []string) chart {
+	matchUser := map[string]bool{}
+	for _, u := range users {
+		matchUser[strings.ToLower(u)] = true
+	}
+
 	uMap := map[string]int{}
 	for _, i := range is {
 		if i.Author != i.Closer {
+			if len(matchUser) > 0 && !matchUser[strings.ToLower(i.Closer)] {
+				continue
+			}
 			if !strings.HasSuffix(i.Closer, "bot") {
 				uMap[i.Closer]++
 			}
@@ -38,7 +46,7 @@ func issueCloserChart(is []*repo.IssueSummary) chart {
 	}
 }
 
-func commentWordsChart(cs []*repo.CommentSummary) chart {
+func commentWordsChart(cs []*repo.CommentSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, c := range cs {
 		if c.IssueAuthor != c.Commenter {
@@ -54,7 +62,7 @@ func commentWordsChart(cs []*repo.CommentSummary) chart {
 	}
 }
 
-func commentsChart(cs []*repo.CommentSummary) chart {
+func commentsChart(cs []*repo.CommentSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, c := range cs {
 		uMap[c.Commenter] += c.Comments

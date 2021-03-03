@@ -18,7 +18,7 @@ import (
 	"github.com/google/pullsheet/pkg/repo"
 )
 
-func reviewsChart(reviews []*repo.ReviewSummary) chart {
+func reviewsChart(reviews []*repo.ReviewSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, r := range reviews {
 		uMap[r.Reviewer]++
@@ -32,7 +32,7 @@ func reviewsChart(reviews []*repo.ReviewSummary) chart {
 	}
 }
 
-func reviewCommentsChart(reviews []*repo.ReviewSummary) chart {
+func reviewCommentsChart(reviews []*repo.ReviewSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, r := range reviews {
 		uMap[r.Reviewer] += r.ReviewComments
@@ -46,7 +46,7 @@ func reviewCommentsChart(reviews []*repo.ReviewSummary) chart {
 	}
 }
 
-func reviewWordsChart(reviews []*repo.ReviewSummary) chart {
+func reviewWordsChart(reviews []*repo.ReviewSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, r := range reviews {
 		uMap[r.Reviewer] += r.Words
