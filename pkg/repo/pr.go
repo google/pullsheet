@@ -67,7 +67,7 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 		logrus.Infof("Current PR updated at %s", prs[0].GetUpdatedAt())
 		for _, pr := range prs {
 			if pr.GetClosedAt().After(until) {
-				logrus.Infof("PR#d closed at %s", pr.GetNumber(), pr.GetUpdatedAt())
+				logrus.Infof("PR#%d closed at %s", pr.GetNumber(), pr.GetUpdatedAt())
 				continue
 			}
 
@@ -98,12 +98,12 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 			logrus.Infof("Fetching PR #%d by %s (updated %s): %q", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetUpdatedAt(), pr.GetTitle())
 			fullPR, err := ghcache.PullRequestsGet(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
 			if err != nil {
-				time.Sleep(1)
+				time.Sleep(1 * time.Second)
 				fullPR, err = ghcache.PullRequestsGet(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
-			}
-			if err != nil {
-				logrus.Errorf("failed PullRequestsGet: %v", err)
-				break
+				if err != nil {
+					logrus.Errorf("failed PullRequestsGet: %v", err)
+					break
+				}
 			}
 
 			if !fullPR.GetMerged() || fullPR.GetMergeCommitSHA() == "" {
@@ -205,5 +205,6 @@ func PullSummary(prs map[*github.PullRequest][]*github.CommitFile, since time.Ti
 			Description: body,
 		})
 	}
+
 	return sum, nil
 }

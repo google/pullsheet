@@ -69,17 +69,3 @@ func sizeChart(prs []*repo.PRSummary) chart {
 		Items:  topItems(mapToItems(uMap)),
 	}
 }
-
-func deleteChart(prs []*repo.PRSummary) chart {
-	uMap := map[string]int{}
-	for _, pr := range prs {
-		uMap[pr.User] += pr.Deleted
-	}
-
-	return chart{
-		ID:     "prDeleters",
-		Title:  "Code Slayers",
-		Metric: "Lines of code (deleted)",
-		Items:  topItems(mapToItems(uMap)),
-	}
-}

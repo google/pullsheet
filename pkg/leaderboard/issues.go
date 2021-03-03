@@ -15,8 +15,9 @@
 package leaderboard
 
 import (
-	"github.com/google/pullsheet/pkg/repo"
 	"strings"
+
+	"github.com/google/pullsheet/pkg/repo"
 )
 
 func issueCloserChart(is []*repo.IssueSummary) chart {

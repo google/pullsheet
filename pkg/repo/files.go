@@ -31,17 +31,18 @@ import (
 func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org string, project string, num int) ([]*github.CommitFile, error) {
 	logrus.Infof("Fetching file list for #%d", num)
 
-	var files []*github.CommitFile
 	changed, err := ghcache.PullRequestsListFiles(ctx, c.Cache, c.GitHubClient, t, org, project, num)
 	if err != nil {
-		return files, err
+		return []*github.CommitFile{}, err
 	}
 
+	files := make([]*github.CommitFile, 0, len(changed))
 	for _, cf := range changed {
 		if ignorePathRe.MatchString(cf.GetFilename()) {
 			logrus.Infof("ignoring %s", cf.GetFilename())
 			continue
 		}
+
 		files = append(files, &cf)
 	}
 

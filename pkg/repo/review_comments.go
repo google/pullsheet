@@ -79,18 +79,20 @@ func MergedReviews(ctx context.Context, c *client.Client, org string, project st
 			return nil, err
 		}
 
-		for _, c := range cs {
-			if isBot(c.GetUser()) {
+		for idx := range cs {
+			if isBot(cs[idx].GetUser()) {
 				continue
 			}
-			body := strings.TrimSpace(c.GetBody())
-			comments = append(comments, comment{Author: c.GetUser().GetLogin(), Body: body, CreatedAt: c.GetCreatedAt(), Review: true})
+
+			body := strings.TrimSpace(cs[idx].GetBody())
+			comments = append(comments, comment{Author: cs[idx].GetUser().GetLogin(), Body: body, CreatedAt: cs[idx].GetCreatedAt(), Review: true})
 		}
 
 		is, err := ghcache.IssuesListComments(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
 		if err != nil {
 			return nil, err
 		}
+
 		for _, i := range is {
 			if isBot(i.GetUser()) {
 				continue

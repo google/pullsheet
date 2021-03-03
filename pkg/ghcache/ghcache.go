@@ -49,7 +49,7 @@ func PullRequestsGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t t
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
 		}
-		return pr, save(dv, key, blob{PullRequest: *pr})
+		return pr, save(dv, key, &blob{PullRequest: *pr})
 	}
 
 	logrus.Debugf("cache hit: %v", key)
@@ -69,7 +69,7 @@ func PullRequestsListFiles(ctx context.Context, dv *diskv.Diskv, c *github.Clien
 		for _, f := range fsp {
 			fs = append(fs, *f)
 		}
-		return fs, save(dv, key, blob{CommitFiles: fs})
+		return fs, save(dv, key, &blob{CommitFiles: fs})
 	}
 
 	logrus.Debugf("cache hit: %v", key)
@@ -89,7 +89,7 @@ func PullRequestsListComments(ctx context.Context, dv *diskv.Diskv, c *github.Cl
 		for _, c := range csp {
 			cs = append(cs, *c)
 		}
-		return cs, save(dv, key, blob{PullRequestComments: cs})
+		return cs, save(dv, key, &blob{PullRequestComments: cs})
 	}
 
 	logrus.Debugf("cache hit: %v", key)
@@ -105,7 +105,7 @@ func IssuesGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Ti
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
 		}
-		return i, save(dv, key, blob{Issue: *i})
+		return i, save(dv, key, &blob{Issue: *i})
 	}
 
 	logrus.Debugf("cache hit: %v", key)
@@ -125,14 +125,14 @@ func IssuesListComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, 
 		for _, c := range csp {
 			cs = append(cs, *c)
 		}
-		return cs, save(dv, key, blob{IssueComments: cs})
+		return cs, save(dv, key, &blob{IssueComments: cs})
 	}
 
 	logrus.Debugf("cache hit: %v", key)
 	return val.IssueComments, nil
 }
 
-func save(dv *diskv.Diskv, key string, blob blob) error {
+func save(dv *diskv.Diskv, key string, blob *blob) error {
 	var bs bytes.Buffer
 	enc := gob.NewEncoder(&bs)
 	err := enc.Encode(blob)
