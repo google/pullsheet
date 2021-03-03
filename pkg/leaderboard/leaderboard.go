@@ -51,7 +51,7 @@ type item struct {
 }
 
 // Render returns an HTML formatted leaderboard page
-func Render(title string, since time.Time, until time.Time, prs []*repo.PRSummary, reviews []*repo.ReviewSummary, issues []*repo.IssueSummary, comments []*repo.CommentSummary) (string, error) {
+func Render(title string, since time.Time, until time.Time, users []string, prs []*repo.PRSummary, reviews []*repo.ReviewSummary, issues []*repo.IssueSummary, comments []*repo.CommentSummary) (string, error) {
 	funcMap := template.FuncMap{}
 	tmpl, err := template.New("LeaderBoard").Funcs(funcMap).Parse(leaderboardTmpl)
 	if err != nil {
@@ -73,25 +73,25 @@ func Render(title string, since time.Time, until time.Time, prs []*repo.PRSummar
 			{
 				Title: "Reviewers",
 				Charts: []chart{
-					reviewsChart(reviews),
-					reviewWordsChart(reviews),
-					reviewCommentsChart(reviews),
+					reviewsChart(reviews, users),
+					reviewWordsChart(reviews, users),
+					reviewCommentsChart(reviews, users),
 				},
 			},
 			{
 				Title: "Pull Requests",
 				Charts: []chart{
-					mergeChart(prs),
-					deltaChart(prs),
-					sizeChart(prs),
+					mergeChart(prs, users),
+					deltaChart(prs, users),
+					sizeChart(prs, users),
 				},
 			},
 			{
 				Title: "Issues",
 				Charts: []chart{
-					commentsChart(comments),
-					commentWordsChart(comments),
-					issueCloserChart(issues),
+					commentsChart(comments, users),
+					commentWordsChart(comments, users),
+					issueCloserChart(issues, users),
 				},
 			},
 		},

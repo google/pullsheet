@@ -18,7 +18,7 @@ import (
 	"github.com/google/pullsheet/pkg/repo"
 )
 
-func mergeChart(prs []*repo.PRSummary) chart {
+func mergeChart(prs []*repo.PRSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, pr := range prs {
 		uMap[pr.User]++
@@ -32,7 +32,7 @@ func mergeChart(prs []*repo.PRSummary) chart {
 	}
 }
 
-func deltaChart(prs []*repo.PRSummary) chart {
+func deltaChart(prs []*repo.PRSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, pr := range prs {
 		uMap[pr.User] += pr.Delta
@@ -46,7 +46,7 @@ func deltaChart(prs []*repo.PRSummary) chart {
 	}
 }
 
-func sizeChart(prs []*repo.PRSummary) chart {
+func sizeChart(prs []*repo.PRSummary, _ []string) chart {
 	sz := map[string][]int{}
 	for _, pr := range prs {
 		sz[pr.User] = append(sz[pr.User], pr.Delta-pr.Deleted)

@@ -6,6 +6,7 @@ require (
 	github.com/blevesearch/segment v0.9.0
 	github.com/gocarina/gocsv v0.0.0-20201208093247-67c824bc04d4
 	github.com/google/go-github/v33 v33.0.0
+	github.com/karrick/tparse v2.4.2+incompatible
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.0

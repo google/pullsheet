@@ -78,7 +78,7 @@ func runLeaderBoard(rootOpts *rootOptions) error {
 		title = strings.Join(rootOpts.repos, ", ")
 	}
 
-	out, err := leaderboard.Render(title, rootOpts.sinceParsed, rootOpts.untilParsed, prs, reviews, issues, comments)
+	out, err := leaderboard.Render(title, rootOpts.sinceParsed, rootOpts.untilParsed, rootOpts.users, prs, reviews, issues, comments)
 	if err != nil {
 		logrus.Error(err)
 		return err

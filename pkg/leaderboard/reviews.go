@@ -18,7 +18,7 @@ import (
 	"github.com/google/pullsheet/pkg/repo"
 )
 
-func reviewsChart(reviews []*repo.ReviewSummary) chart {
+func reviewsChart(reviews []*repo.ReviewSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, r := range reviews {
 		uMap[r.Reviewer]++
@@ -27,12 +27,12 @@ func reviewsChart(reviews []*repo.ReviewSummary) chart {
 	return chart{
 		ID:     "reviewCounts",
 		Title:  "Most Influential",
-		Metric: "# of Pull Requests Reviewed",
+		Metric: "# of Merged PRs reviewed",
 		Items:  topItems(mapToItems(uMap)),
 	}
 }
 
-func reviewCommentsChart(reviews []*repo.ReviewSummary) chart {
+func reviewCommentsChart(reviews []*repo.ReviewSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, r := range reviews {
 		uMap[r.Reviewer] += r.ReviewComments
@@ -41,12 +41,12 @@ func reviewCommentsChart(reviews []*repo.ReviewSummary) chart {
 	return chart{
 		ID:     "reviewComments",
 		Title:  "Most Demanding",
-		Metric: "# of Review Comments",
+		Metric: "# of Review Comments in merged PRs",
 		Items:  topItems(mapToItems(uMap)),
 	}
 }
 
-func reviewWordsChart(reviews []*repo.ReviewSummary) chart {
+func reviewWordsChart(reviews []*repo.ReviewSummary, _ []string) chart {
 	uMap := map[string]int{}
 	for _, r := range reviews {
 		uMap[r.Reviewer] += r.Words
@@ -55,7 +55,7 @@ func reviewWordsChart(reviews []*repo.ReviewSummary) chart {
 	return chart{
 		ID:     "reviewWords",
 		Title:  "Most Helpful",
-		Metric: "# of words written",
+		Metric: "# of words written in merged PRs",
 		Items:  topItems(mapToItems(uMap)),
 	}
 }
