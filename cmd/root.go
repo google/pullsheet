@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/karrick/tparse"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -75,15 +76,15 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(
 		&rootOpts.since,
 		"since",
-		"",
-		"when to query from",
+		"now-90d",
+		"when to query from (date or duration)",
 	)
 
 	rootCmd.PersistentFlags().StringVar(
 		&rootOpts.until,
 		"until",
-		"",
-		"when to query till",
+		"now",
+		"when to query till (date or duration)",
 	)
 
 	rootCmd.PersistentFlags().StringVar(
@@ -114,16 +115,29 @@ func initCommand(*cobra.Command, []string) error {
 	}
 
 	var err error
-	rootOpts.sinceParsed, err = time.Parse(dateForm, rootOpts.since)
-	if err != nil {
-		return errors.Wrap(err, "since time parse")
+
+	t, err := tparse.ParseNow(dateForm, rootOpts.since)
+	if err == nil {
+		rootOpts.sinceParsed = t
+	} else {
+		logrus.Infof("%q not a duration: %v", rootOpts.since, err)
+		rootOpts.sinceParsed, err = time.Parse(dateForm, rootOpts.since)
+		if err != nil {
+			return errors.Wrap(err, "since time parse")
+		}
 	}
 
 	rootOpts.untilParsed = time.Now()
-	if rootOpts.until != "" {
-		rootOpts.untilParsed, err = time.Parse(dateForm, rootOpts.until)
-		if err != nil {
-			return errors.Wrap(err, "until time parse")
+	if rootOpts.since != "" {
+		t, err := tparse.ParseNow(dateForm, rootOpts.until)
+		if err == nil {
+			rootOpts.untilParsed = t
+		} else {
+			logrus.Infof("%q not a duration: %v", rootOpts.until, err)
+			rootOpts.untilParsed, err = time.Parse(dateForm, rootOpts.until)
+			if err != nil {
+				return errors.Wrap(err, "until time parse")
+			}
 		}
 	}
 
