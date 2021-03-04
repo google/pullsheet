@@ -46,13 +46,11 @@ func runReviews(rootOpts *rootOptions) error {
 	ctx := context.Background()
 	c, err := client.New(ctx, rootOpts.tokenPath)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 
 	data, err := generateReviewData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 

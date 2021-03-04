@@ -21,7 +21,6 @@ import (
 
 	"github.com/google/go-github/v33/github"
 	"github.com/peterbourgon/diskv"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
 	"github.com/google/pullsheet/pkg/ghcache"
@@ -35,7 +34,6 @@ type Client struct {
 func New(ctx context.Context, tokenPath string) (*Client, error) {
 	token, err := ioutil.ReadFile(tokenPath)
 	if err != nil {
-		logrus.Error(err)
 		return nil, err
 	}
 
@@ -44,7 +42,6 @@ func New(ctx context.Context, tokenPath string) (*Client, error) {
 
 	dv, err := ghcache.New()
 	if err != nil {
-		logrus.Error(err)
 		return nil, err
 	}
 
