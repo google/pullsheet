@@ -45,31 +45,26 @@ func runLeaderBoard(rootOpts *rootOptions) error {
 	ctx := context.Background()
 	c, err := client.New(ctx, rootOpts.tokenPath)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 
 	prs, err := generatePullData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 
 	reviews, err := generateReviewData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 
 	issues, err := generateIssueData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 
 	comments, err := generateCommentsData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 
@@ -80,7 +75,6 @@ func runLeaderBoard(rootOpts *rootOptions) error {
 
 	out, err := leaderboard.Render(title, rootOpts.sinceParsed, rootOpts.untilParsed, rootOpts.users, prs, reviews, issues, comments)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 

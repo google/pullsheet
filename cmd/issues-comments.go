@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/gocarina/gocsv"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/google/pullsheet/pkg/client"
@@ -46,13 +45,11 @@ func runIssueComments(rootOpts *rootOptions) error {
 	ctx := context.Background()
 	c, err := client.New(ctx, rootOpts.tokenPath)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 
 	data, err := generateCommentsData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
-		logrus.Error(err)
 		return err
 	}
 
@@ -61,9 +58,7 @@ func runIssueComments(rootOpts *rootOptions) error {
 		return err
 	}
 
-	logrus.Infof("%d bytes of issue-comments output", len(out))
 	fmt.Print(out)
-
 	return nil
 }
 
