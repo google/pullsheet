@@ -140,7 +140,7 @@ type PRSummary struct {
 }
 
 // PullSummary converts GitHub PR data into a summarized view
-func PullSummary(prs map[*github.PullRequest][]*github.CommitFile, since time.Time, until time.Time) ([]*PRSummary, error) {
+func PullSummary(prs map[*github.PullRequest][]github.CommitFile, since time.Time, until time.Time) ([]*PRSummary, error) {
 	sum := []*PRSummary{}
 	seen := map[string]bool{}
 

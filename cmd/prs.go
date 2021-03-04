@@ -67,7 +67,7 @@ func runPRs(rootOpts *rootOptions) error {
 }
 
 func generatePullData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.PRSummary, error) {
-	prFiles := map[*github.PullRequest][]*github.CommitFile{}
+	prFiles := map[*github.PullRequest][]github.CommitFile{}
 
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
@@ -78,15 +78,11 @@ func generatePullData(ctx context.Context, c *client.Client, repos []string, use
 		}
 
 		for _, pr := range prs {
-			var files []*github.CommitFile
-			var err error
-
-			files, err = repo.FilteredFiles(ctx, c, pr.GetMergedAt(), org, project, pr.GetNumber())
+			files, err := repo.FilteredFiles(ctx, c, pr.GetMergedAt(), org, project, pr.GetNumber())
 			if err != nil {
-				logrus.Errorf("unable to get file list for #%d: %v", pr.GetNumber(), err)
-				return nil, err
+				return nil, fmt.Errorf("filtered files: %v", err)
 			}
-
+			logrus.Errorf("%s files: %v", pr, files)
 			prFiles[pr] = files
 		}
 	}

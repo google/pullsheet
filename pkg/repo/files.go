@@ -28,29 +28,30 @@ import (
 )
 
 // FilteredFiles returns a list of commit files that matter
-func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org string, project string, num int) ([]*github.CommitFile, error) {
+func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org string, project string, num int) ([]github.CommitFile, error) {
 	logrus.Infof("Fetching file list for #%d", num)
 
 	changed, err := ghcache.PullRequestsListFiles(ctx, c.Cache, c.GitHubClient, t, org, project, num)
 	if err != nil {
-		return []*github.CommitFile{}, err
+		return nil, err
 	}
 
-	files := make([]*github.CommitFile, 0, len(changed))
+	files := []github.CommitFile{}
 	for _, cf := range changed {
+		logrus.Errorf("#%d changed: %s", num, cf.GetFilename())
 		if ignorePathRe.MatchString(cf.GetFilename()) {
 			logrus.Infof("ignoring %s", cf.GetFilename())
 			continue
 		}
 
-		files = append(files, &cf)
+		files = append(files, cf)
 	}
 
 	return files, err
 }
 
 // prType returns what kind of PR it thinks this may be
-func prType(files []*github.CommitFile) string {
+func prType(files []github.CommitFile) string {
 	result := ""
 	for _, cf := range files {
 		f := cf.GetFilename()
