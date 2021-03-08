@@ -30,7 +30,7 @@ import (
 const dateForm = "2006-01-02"
 
 var (
-	ignorePathRe = regexp.MustCompile(`go\.mod|go\.sum|vendor/|third_party|ignore|schemas/v\d|schema/v\d|Gopkg.lock|.DS_Store|swagger.json|\.pb\.go|references/api/grpc`)
+	ignorePathRe = regexp.MustCompile(`go\.mod|go\.sum|vendor/|third_party|ignore|schemas/v\d|schema/v\d|Gopkg.lock|.DS_Store|swagger.json|\.pb\.go|references/api/grpc|docs/commands/|pb\.gw\.go|proto/.*\.tmpl|proto/.*\.md`)
 	truncRe      = regexp.MustCompile(`changelog|CHANGELOG|Gopkg.toml`)
 	commentRe    = regexp.MustCompile(`<!--.*?>`)
 )
@@ -184,11 +184,13 @@ func PullSummary(prs map[*github.PullRequest][]github.CommitFile, since time.Tim
 				logrus.Infof("truncating %s from %d to %d lines added", f.GetFilename(), f.GetAdditions(), 10)
 				added += 10
 			} else {
+				logrus.Infof("%s - %d added, %d deleted", f.GetFilename(), f.GetAdditions(), f.GetDeletions())
 				added += f.GetAdditions()
 			}
 			deleted += f.GetDeletions()
 			paths = append(paths, f.GetFilename())
 		}
+		logrus.Infof("%s had %d files to consider - %d added, %d deleted", pr.GetHTMLURL(), len(files), added, deleted)
 
 		sum = append(sum, &PRSummary{
 			URL:         pr.GetHTMLURL(),

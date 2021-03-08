@@ -82,7 +82,7 @@ func generatePullData(ctx context.Context, c *client.Client, repos []string, use
 			if err != nil {
 				return nil, fmt.Errorf("filtered files: %v", err)
 			}
-			logrus.Errorf("%s files: %v", pr, files)
+			logrus.Debugf("%s files: %v", pr, files)
 			prFiles[pr] = files
 		}
 	}

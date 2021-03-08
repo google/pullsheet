@@ -36,13 +36,15 @@ func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org strin
 		return nil, err
 	}
 
+	logrus.Infof("%s/%s #%d had %d changed files", org, project, num, len(changed))
+
 	files := []github.CommitFile{}
 	for _, cf := range changed {
-		logrus.Errorf("#%d changed: %s", num, cf.GetFilename())
 		if ignorePathRe.MatchString(cf.GetFilename()) {
 			logrus.Infof("ignoring %s", cf.GetFilename())
 			continue
 		}
+		logrus.Errorf("#%d changed: %s", num, cf.GetFilename())
 
 		files = append(files, cf)
 	}
