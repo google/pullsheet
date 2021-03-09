@@ -36,7 +36,7 @@ var (
 )
 
 // MergedPulls returns a list of pull requests in a project
-func MergedPulls(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*github.PullRequest, error) {
+func MergedPulls(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string, branches []string) ([]*github.PullRequest, error) {
 	var result []*github.PullRequest
 
 	opts := &github.PullRequestListOptions{
@@ -51,6 +51,11 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 	matchUser := map[string]bool{}
 	for _, u := range users {
 		matchUser[strings.ToLower(u)] = true
+	}
+
+	matchBranch := map[string]bool{}
+	for _, b := range branches {
+		matchBranch[strings.ToLower(b)] = true
 	}
 
 	logrus.Infof("Gathering pull requests for %s/%s, users=%q: %+v", org, project, users, opts)
@@ -106,9 +111,9 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 				}
 			}
 
-			ref := fullPR.GetBase().GetRef()
-			if ref != "master" && ref != "main" && ref != "head" {
-				logrus.Errorf("#%d merged to %s, skipping", pr.GetNumber(), ref)
+			branch := fullPR.GetBase().GetRef()
+			if len(matchBranch) > 0 && !matchBranch[branch] {
+				logrus.Errorf("#%d merged to %s, skipping", pr.GetNumber(), branch)
 				continue
 			}
 

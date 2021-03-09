@@ -55,7 +55,7 @@ type comment struct {
 
 // MergedReviews returns a list of pull requests in a project (merged only)
 func MergedReviews(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*ReviewSummary, error) {
-	prs, err := MergedPulls(ctx, c, org, project, since, until, nil)
+	prs, err := MergedPulls(ctx, c, org, project, since, until, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("pulls: %v", err)
 	}

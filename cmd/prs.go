@@ -50,7 +50,7 @@ func runPRs(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := generatePullData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := generatePullData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.branches, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
@@ -66,13 +66,13 @@ func runPRs(rootOpts *rootOptions) error {
 	return nil
 }
 
-func generatePullData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.PRSummary, error) {
+func generatePullData(ctx context.Context, c *client.Client, repos []string, users []string, branches []string, since time.Time, until time.Time) ([]*repo.PRSummary, error) {
 	prFiles := map[*github.PullRequest][]github.CommitFile{}
 
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
 
-		prs, err := repo.MergedPulls(ctx, c, org, project, since, until, users)
+		prs, err := repo.MergedPulls(ctx, c, org, project, since, until, users, branches)
 		if err != nil {
 			return nil, fmt.Errorf("list: %v", err)
 		}

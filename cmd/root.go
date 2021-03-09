@@ -46,6 +46,7 @@ type rootOptions struct {
 	title       string
 	tokenPath   string
 	logLevel    string
+	branches    []string
 }
 
 var rootOpts = &rootOptions{}
@@ -66,6 +67,12 @@ func init() {
 		"comma-delimited list of repositories. ex: kubernetes/minikube, google/pullsheet",
 	)
 
+	rootCmd.PersistentFlags().StringSliceVar(
+		&rootOpts.branches,
+		"branches",
+		[]string{},
+		"comma-delimited list of branches ex: master,main,head",
+	)
 	rootCmd.PersistentFlags().StringSliceVar(
 		&rootOpts.users,
 		"users",
