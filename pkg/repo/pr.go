@@ -106,6 +106,11 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 				}
 			}
 
+			ref := fullPR.GetBase().GetRef()
+			if ref != "master" && ref != "main" && ref != "head" {
+				logrus.Errorf("#%d merged to %s, skipping", pr.GetNumber(), ref)
+			}
+
 			if !fullPR.GetMerged() || fullPR.GetMergeCommitSHA() == "" {
 				logrus.Infof("#%d was not merged, skipping", pr.GetNumber())
 				continue
