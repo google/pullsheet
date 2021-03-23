@@ -17,15 +17,12 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/gocarina/gocsv"
-	"github.com/google/go-github/v33/github"
+	"github.com/google/pullsheet/pkg/summary"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/google/pullsheet/pkg/client"
-	"github.com/google/pullsheet/pkg/repo"
 )
 
 // prsCmd represents the subcommand for `pullsheet prs`
@@ -50,7 +47,7 @@ func runPRs(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := generatePullData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := summary.GeneratePullData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
@@ -64,33 +61,4 @@ func runPRs(rootOpts *rootOptions) error {
 	fmt.Print(out)
 
 	return nil
-}
-
-func generatePullData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.PRSummary, error) {
-	prFiles := map[*github.PullRequest][]github.CommitFile{}
-
-	for _, r := range repos {
-		org, project := repo.ParseURL(r)
-
-		prs, err := repo.MergedPulls(ctx, c, org, project, since, until, users)
-		if err != nil {
-			return nil, fmt.Errorf("list: %v", err)
-		}
-
-		for _, pr := range prs {
-			files, err := repo.FilteredFiles(ctx, c, pr.GetMergedAt(), org, project, pr.GetNumber())
-			if err != nil {
-				return nil, fmt.Errorf("filtered files: %v", err)
-			}
-			logrus.Errorf("%s files: %v", pr, files)
-			prFiles[pr] = files
-		}
-	}
-
-	sum, err := repo.PullSummary(prFiles, since, until)
-	if err != nil {
-		return nil, fmt.Errorf("pull summary failed: %v", err)
-	}
-
-	return sum, nil
 }
