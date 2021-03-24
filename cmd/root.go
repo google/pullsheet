@@ -108,15 +108,17 @@ func init() {
 		"info",
 		fmt.Sprintf("the logging verbosity, either %s", levelNames()),
 	)
+
+	// Set up viper flag handling
+	if err := viper.BindPFlags(rootCmd.PersistentFlags()); err != nil {
+		panic(err)
+	}
 }
 
 // initRootOpts sets up root options, using env variables to set options if
 // they haven't been set by flags
 func initRootOpts() error {
-	// Set up viper flag handling
-	if err := viper.BindPFlags(rootCmd.PersistentFlags()); err != nil {
-		return err
-	}
+
 
 	// Set up viper environment variable handling
 	viper.SetEnvPrefix("pullsheet")
