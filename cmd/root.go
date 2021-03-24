@@ -118,8 +118,6 @@ func init() {
 // initRootOpts sets up root options, using env variables to set options if
 // they haven't been set by flags
 func initRootOpts() error {
-
-
 	// Set up viper environment variable handling
 	viper.SetEnvPrefix("pullsheet")
 	envKeys := []string{
