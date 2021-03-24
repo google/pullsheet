@@ -132,7 +132,7 @@ func initRootOpts() error {
 	rootOpts.since = viper.GetString("since")
 	rootOpts.until = viper.GetString("until")
 	rootOpts.title = viper.GetString("title")
-	rootOpts.tokenPath = viper.GetString("tokenpath")
+	rootOpts.tokenPath = viper.GetString("token-path")
 
 	return nil
 }
