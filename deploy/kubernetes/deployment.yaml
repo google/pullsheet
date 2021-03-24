@@ -28,10 +28,10 @@ spec:
             configMapKeyRef:
               key: "users"
               name: "pullsheet-config"
-        - name: PULLSHEET_FROM
+        - name: PULLSHEET_SINCE
           valueFrom:
             configMapKeyRef:
-              key: "from"
+              key: "since"
               name: "pullsheet-config"
         - name: PULLSHEET_UNTIL
           valueFrom:
