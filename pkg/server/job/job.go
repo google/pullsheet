@@ -19,6 +19,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/leaderboard"
 )
@@ -63,6 +65,9 @@ func (j *Job) Render() (string, error) {
 	return result, nil
 }
 
-func (j *Job) Update(ctx context.Context, cl *client.Client) error {
-	return j.u.updateData(ctx, cl, j.opts)
+func (j *Job) Update(ctx context.Context, cl *client.Client) {
+	err := j.u.updateData(ctx, cl, j.opts)
+	if err != nil {
+		logrus.Errorf("Failed to update job: %d", err)
+	}
 }

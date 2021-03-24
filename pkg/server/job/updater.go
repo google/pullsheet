@@ -16,7 +16,6 @@ package job
 
 import (
 	"context"
-	"strings"
 	"sync"
 
 	"github.com/google/pullsheet/pkg/client"
@@ -84,11 +83,6 @@ func (u *updater) updateData(ctx context.Context, cl *client.Client, opts *Opts)
 	comments, err := summary.Comments(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
 	if err != nil {
 		return err
-	}
-
-	title := opts.Title
-	if title == "" {
-		title = strings.Join(opts.Repos, ", ")
 	}
 
 	// Update data in Job

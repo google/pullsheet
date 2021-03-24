@@ -26,7 +26,6 @@ import (
 )
 
 type Server struct {
-	ctx  context.Context
 	cl   *client.Client
 	jobs []*job.Job
 }
