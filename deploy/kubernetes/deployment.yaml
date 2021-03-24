@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pullsheet
+spec:
+  selector:
+    matchLabels:
+      app: pullsheet
+  template:
+    metadata:
+      labels:
+        app: pullsheet
+    spec:
+      containers:
+      - name: pullsheet
+        image: pullsheet
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PULLSHEET_REPOS
+          valueFrom:
+            configMapKeyRef:
+              key: "repos"
+              name: "pullsheet-config"
+        - name: PULLSHEET_USERS
+          valueFrom:
+            configMapKeyRef:
+              key: "users"
+              name: "pullsheet-config"
+        - name: PULLSHEET_FROM
+          valueFrom:
+            configMapKeyRef:
+              key: "from"
+              name: "pullsheet-config"
+        - name: PULLSHEET_UNTIL
+          valueFrom:
+            configMapKeyRef:
+              key: "until"
+              name: "pullsheet-config"
+        - name: PULLSHEET_TITLE
+          valueFrom:
+            configMapKeyRef:
+              key: "title"
+              name: "pullsheet-config"

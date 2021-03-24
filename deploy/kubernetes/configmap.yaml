@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pullsheet-config
+data:
+  repos: "google/pullsheet"
+  users: "tstromberg marlongamez"
+  from: "2021-03-01"
+  until: "2021-03-24"
+  title: "pullsheet stats"
+

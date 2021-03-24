@@ -69,6 +69,8 @@ func runServer(rootOpts *rootOptions) error {
 
 	s := server.New(ctx, c, j)
 	http.HandleFunc("/", s.Root())
+	http.HandleFunc("/healthz", s.Healthz())
+	http.HandleFunc("/threadz", s.Threadz())
 
 	listenAddr := fmt.Sprintf(":%s", os.Getenv("PORT"))
 	if listenAddr == ":" {
