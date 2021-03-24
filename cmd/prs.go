@@ -47,7 +47,7 @@ func runPRs(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := summary.GeneratePullData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := summary.Pulls(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}

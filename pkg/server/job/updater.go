@@ -16,11 +16,12 @@ package job
 
 import (
 	"context"
+	"strings"
+	"sync"
+
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/repo"
 	"github.com/google/pullsheet/pkg/summary"
-	"strings"
-	"sync"
 )
 
 type updater struct {
@@ -65,22 +66,22 @@ func (u *updater) getComments() []*repo.CommentSummary {
 
 func (u *updater) updateData(ctx context.Context, cl *client.Client, opts Opts) error {
 	// Query data
-	prs, err := summary.GeneratePullData(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
+	prs, err := summary.Pulls(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
 	if err != nil {
 		return err
 	}
 
-	reviews, err := summary.GenerateReviewData(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
+	reviews, err := summary.Reviews(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
 	if err != nil {
 		return err
 	}
 
-	issues, err := summary.GenerateIssueData(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
+	issues, err := summary.Issues(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
 	if err != nil {
 		return err
 	}
 
-	comments, err := summary.GenerateCommentsData(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
+	comments, err := summary.Comments(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
 	if err != nil {
 		return err
 	}
@@ -95,9 +96,9 @@ func (u *updater) updateData(ctx context.Context, cl *client.Client, opts Opts) 
 	defer u.mu.Unlock()
 
 	u.data = data{
-		prs: prs,
-		reviews: reviews,
-		issues: issues,
+		prs:      prs,
+		reviews:  reviews,
+		issues:   issues,
 		comments: comments,
 	}
 	return nil

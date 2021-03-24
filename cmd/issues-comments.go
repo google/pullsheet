@@ -46,7 +46,7 @@ func runIssueComments(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := summary.GenerateCommentsData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := summary.Comments(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}

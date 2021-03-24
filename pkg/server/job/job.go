@@ -16,10 +16,11 @@ package job
 
 import (
 	"context"
-	"github.com/google/pullsheet/pkg/client"
-	"github.com/google/pullsheet/pkg/leaderboard"
 	"sync"
 	"time"
+
+	"github.com/google/pullsheet/pkg/client"
+	"github.com/google/pullsheet/pkg/leaderboard"
 )
 
 type Job struct {
@@ -40,17 +41,17 @@ func New(opts Opts) *Job {
 	return &Job{
 		opts: opts,
 		u: updater{
-			mu: &sync.Mutex{},
+			mu:   &sync.Mutex{},
 			data: data{},
 		},
 	}
 }
 
 func (j *Job) Render() (string, error) {
-	d := data {
-		prs: j.u.getPRs(),
-		reviews: j.u.getReviews(),
-		issues: j.u.getIssues(),
+	d := data{
+		prs:      j.u.getPRs(),
+		reviews:  j.u.getReviews(),
+		issues:   j.u.getIssues(),
 		comments: j.u.getComments(),
 	}
 

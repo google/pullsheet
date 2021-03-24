@@ -47,7 +47,7 @@ func runReviews(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := summary.GenerateReviewData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := summary.Reviews(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}

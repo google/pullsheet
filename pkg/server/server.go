@@ -17,14 +17,17 @@ package server
 import (
 	"context"
 	"fmt"
+	"net/http"
+
+	"github.com/sirupsen/logrus"
+
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/server/job"
-	"net/http"
 )
 
 type Server struct {
-	ctx context.Context
-	cl *client.Client
+	ctx  context.Context
+	cl   *client.Client
 	jobs []*job.Job
 }
 
@@ -36,15 +39,17 @@ func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
 	}
 
 	return &Server{
-		ctx: ctx,
-		cl: c,
+		cl:   c,
 		jobs: jobs,
 	}
 }
 
 func (s *Server) Root() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, _ := s.jobs[0].Render()
+		res, err := s.jobs[0].Render()
+		if err != nil {
+			logrus.Errorf("rendering job page: %s", err)
+		}
 		fmt.Fprint(w, res)
 	}
 }

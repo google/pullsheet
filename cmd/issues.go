@@ -47,7 +47,7 @@ func runIssues(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := summary.GenerateIssueData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := summary.Issues(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}

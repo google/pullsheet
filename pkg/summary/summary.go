@@ -17,14 +17,16 @@ package summary
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/go-github/v33/github"
+	"github.com/sirupsen/logrus"
+
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/repo"
-	"github.com/sirupsen/logrus"
-	"time"
 )
 
-func GeneratePullData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.PRSummary, error) {
+func Pulls(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.PRSummary, error) {
 	prFiles := map[*github.PullRequest][]github.CommitFile{}
 
 	for _, r := range repos {
@@ -53,7 +55,7 @@ func GeneratePullData(ctx context.Context, c *client.Client, repos []string, use
 	return sum, nil
 }
 
-func GenerateReviewData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.ReviewSummary, error) {
+func Reviews(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.ReviewSummary, error) {
 	rs := []*repo.ReviewSummary{}
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
@@ -67,7 +69,7 @@ func GenerateReviewData(ctx context.Context, c *client.Client, repos []string, u
 	return rs, nil
 }
 
-func GenerateIssueData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.IssueSummary, error) {
+func Issues(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.IssueSummary, error) {
 	rs := []*repo.IssueSummary{}
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
@@ -81,7 +83,7 @@ func GenerateIssueData(ctx context.Context, c *client.Client, repos []string, us
 	return rs, nil
 }
 
-func GenerateCommentsData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.CommentSummary, error) {
+func Comments(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.CommentSummary, error) {
 	rs := []*repo.CommentSummary{}
 	for _, r := range repos {
 		org, project := repo.ParseURL(r)
