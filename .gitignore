@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# goland, IntelliJ
+.idea
+
+# binaries
+pullsheet
