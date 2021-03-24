@@ -17,8 +17,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/google/pullsheet/pkg/summary"
 	"strings"
+
+	"github.com/google/pullsheet/pkg/summary"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

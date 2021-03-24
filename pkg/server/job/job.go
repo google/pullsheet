@@ -24,8 +24,8 @@ import (
 )
 
 type Job struct {
-	opts Opts
-	u    updater
+	opts *Opts
+	u    *updater
 }
 
 // Options related to the Job
@@ -37,10 +37,10 @@ type Opts struct {
 	Title string
 }
 
-func New(opts Opts) *Job {
+func New(opts *Opts) *Job {
 	return &Job{
 		opts: opts,
-		u: updater{
+		u: &updater{
 			mu:   &sync.Mutex{},
 			data: data{},
 		},
@@ -63,6 +63,6 @@ func (j *Job) Render() (string, error) {
 	return result, nil
 }
 
-func (j *Job) Update(ctx context.Context, cl *client.Client) {
-	j.u.updateData(ctx, cl, j.opts)
+func (j *Job) Update(ctx context.Context, cl *client.Client) error {
+	return j.u.updateData(ctx, cl, j.opts)
 }

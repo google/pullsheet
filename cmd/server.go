@@ -59,7 +59,7 @@ func runServer(rootOpts *rootOptions) error {
 
 	// setup initial job
 	j := job.New(
-		job.Opts{
+		&job.Opts{
 			Repos: rootOpts.repos,
 			Users: rootOpts.users,
 			Since: rootOpts.sinceParsed,
