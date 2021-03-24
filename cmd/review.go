@@ -17,14 +17,13 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/gocarina/gocsv"
+	"github.com/google/pullsheet/pkg/summary"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/google/pullsheet/pkg/client"
-	"github.com/google/pullsheet/pkg/repo"
 )
 
 // reviewsCmd represents the subcommand for `pullsheet reviews`
@@ -49,7 +48,7 @@ func runReviews(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := generateReviewData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := summary.Reviews(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
@@ -63,18 +62,4 @@ func runReviews(rootOpts *rootOptions) error {
 	fmt.Print(out)
 
 	return nil
-}
-
-func generateReviewData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.ReviewSummary, error) {
-	rs := []*repo.ReviewSummary{}
-	for _, r := range repos {
-		org, project := repo.ParseURL(r)
-		rrs, err := repo.MergedReviews(ctx, c, org, project, since, until, users)
-		if err != nil {
-			return nil, fmt.Errorf("merged pulls: %v", err)
-		}
-		rs = append(rs, rrs...)
-	}
-
-	return rs, nil
 }

@@ -17,46 +17,62 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
 
-	"github.com/gocarina/gocsv"
-	"github.com/google/pullsheet/pkg/summary"
 	"github.com/spf13/cobra"
 
 	"github.com/google/pullsheet/pkg/client"
+	"github.com/google/pullsheet/pkg/server"
+	"github.com/google/pullsheet/pkg/server/job"
 )
 
-// issuesCommentsCmd represents the subcommand for `pullsheet issue-comments`
-var issuesCommentsCmd = &cobra.Command{
-	Use:           "issue-comments",
-	Short:         "Generate data around issues",
+// serverCmd represents the subcommand for `pullsheet server`
+var serverCmd = &cobra.Command{
+	Use:           "server",
+	Short:         "Serve leaderboard data with web UI",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runIssueComments(rootOpts)
+		return runServer(rootOpts)
 	},
 }
 
+var port int
+
 func init() {
-	rootCmd.AddCommand(issuesCommentsCmd)
+	serverCmd.Flags().IntVar(
+		&port,
+		"port",
+		8080,
+		"Port for server to listen on")
+
+	rootCmd.AddCommand(serverCmd)
 }
 
-func runIssueComments(rootOpts *rootOptions) error {
+func runServer(rootOpts *rootOptions) error {
 	ctx := context.Background()
 	c, err := client.New(ctx, rootOpts.tokenPath)
 	if err != nil {
 		return err
 	}
 
-	data, err := summary.Comments(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
-	if err != nil {
-		return err
-	}
+	// setup initial job
+	j := job.New(
+		&job.Opts{
+			Repos: rootOpts.repos,
+			Users: rootOpts.users,
+			Since: rootOpts.sinceParsed,
+			Until: rootOpts.untilParsed,
+			Title: rootOpts.title,
+		})
 
-	out, err := gocsv.MarshalString(&data)
-	if err != nil {
-		return err
-	}
+	s := server.New(ctx, c, j)
+	http.HandleFunc("/", s.Root())
 
-	fmt.Print(out)
-	return nil
+	listenAddr := fmt.Sprintf(":%s", os.Getenv("PORT"))
+	if listenAddr == ":" {
+		listenAddr = fmt.Sprintf(":%d", port)
+	}
+	return http.ListenAndServe(listenAddr, nil)
 }

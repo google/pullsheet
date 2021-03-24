@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/pullsheet/pkg/summary"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -48,22 +50,22 @@ func runLeaderBoard(rootOpts *rootOptions) error {
 		return err
 	}
 
-	prs, err := generatePullData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	prs, err := summary.Pulls(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
 
-	reviews, err := generateReviewData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	reviews, err := summary.Reviews(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
 
-	issues, err := generateIssueData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	issues, err := summary.Issues(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
 
-	comments, err := generateCommentsData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	comments, err := summary.Comments(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
