@@ -52,7 +52,7 @@ func init() {
 
 func runServer(rootOpts *rootOptions) error {
 	ctx := context.Background()
-	c, err := client.New(ctx, rootOpts.tokenPath)
+	c, err := client.New(ctx, client.Config{GitHubTokenPath: rootOpts.tokenPath})
 	if err != nil {
 		return err
 	}

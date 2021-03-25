@@ -32,16 +32,38 @@ type Client struct {
 	GitHubClient *github.Client
 }
 
-func New(ctx context.Context, tokenPath string) (*Client, error) {
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return nil, err
+type Config struct {
+	GitHubTokenPath string
+	GitHubToken     string
+	PersistBackend  string
+	PersistPath     string
+}
+
+func New(ctx context.Context, c Config) (*Client, error) {
+	if c.PersistBackend == "" {
+		c.PersistBackend = os.Getenv("PERSIST_BACKEND")
 	}
 
-	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: strings.TrimSpace(string(token))}))
-	c := github.NewClient(tc)
+	if c.PersistPath == "" {
+		c.PersistPath = os.Getenv("PERSIST_PATH")
+	}
 
-	p, err := persist.FromEnv("pullsheet", os.Getenv("PERSIST_BACKEND"), os.Getenv("PERSIST_PATH"))
+	if c.GitHubToken == "" {
+		c.GitHubToken = os.Getenv("GITHUB_TOKEN")
+	}
+
+	if c.GitHubToken == "" {
+		bs, err := ioutil.ReadFile(c.GitHubTokenPath)
+		if err != nil {
+			return nil, err
+		}
+		c.GitHubToken = strings.TrimSpace(string(bs))
+	}
+
+	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.GitHubToken}))
+	gc := github.NewClient(tc)
+
+	p, err := persist.FromEnv("pullsheet", c.PersistBackend, c.PersistPath)
 	if err != nil {
 		return nil, fmt.Errorf("persist fromenv: %v", err)
 	}
@@ -52,6 +74,6 @@ func New(ctx context.Context, tokenPath string) (*Client, error) {
 
 	return &Client{
 		Cache:        p,
-		GitHubClient: c,
+		GitHubClient: gc,
 	}, nil
 }
