@@ -20,6 +20,8 @@ spec:
         env:
         - name: PULLSHEET_REPOS
           value: "google/pullsheet"
+        - name: PULLSHEET_BRANCHES
+          value: "main"
         - name: PULLSHEET_USERS
           value: "tstromberg marlongamez"
         - name: PULLSHEET_SINCE

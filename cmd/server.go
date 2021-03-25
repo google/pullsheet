@@ -62,6 +62,7 @@ func runServer(rootOpts *rootOptions) error {
 		&job.Opts{
 			Repos: rootOpts.repos,
 			Users: rootOpts.users,
+			Branches: rootOpts.branches,
 			Since: rootOpts.sinceParsed,
 			Until: rootOpts.untilParsed,
 			Title: rootOpts.title,
