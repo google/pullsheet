@@ -19,27 +19,12 @@ spec:
         - containerPort: 8080
         env:
         - name: PULLSHEET_REPOS
-          valueFrom:
-            configMapKeyRef:
-              key: "repos"
-              name: "pullsheet-config"
+          value: "google/pullsheet"
         - name: PULLSHEET_USERS
-          valueFrom:
-            configMapKeyRef:
-              key: "users"
-              name: "pullsheet-config"
+          value: "tstromberg marlongamez"
         - name: PULLSHEET_SINCE
-          valueFrom:
-            configMapKeyRef:
-              key: "since"
-              name: "pullsheet-config"
+          value: "2021-03-01"
         - name: PULLSHEET_UNTIL
-          valueFrom:
-            configMapKeyRef:
-              key: "until"
-              name: "pullsheet-config"
+          value: "2021-03-24"
         - name: PULLSHEET_TITLE
-          valueFrom:
-            configMapKeyRef:
-              key: "title"
-              name: "pullsheet-config"
+          value: "Pullsheet Stats"
