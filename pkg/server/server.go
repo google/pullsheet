@@ -19,12 +19,17 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
-
-	"github.com/sirupsen/logrus"
+	"strconv"
+	"strings"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/server/job"
+	"github.com/google/pullsheet/pkg/server/site"
+	"github.com/karrick/tparse"
+	"github.com/sirupsen/logrus"
 )
+
+const dateForm = "2006-01-02"
 
 type Server struct {
 	cl   *client.Client
@@ -46,12 +51,89 @@ func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
 
 func (s *Server) Root() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := s.jobs[0].Render()
+		http.Redirect(w, r, "/home", http.StatusFound)
+	}
+}
+
+func (s *Server) Home() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, err := site.Home(s.jobs)
 		if err != nil {
-			logrus.Errorf("rendering job page: %s", err)
+			logrus.Errorf("rendering home page: %d", err)
 		}
 		fmt.Fprint(w, res)
 	}
+}
+
+func (s *Server) Job() http.HandlerFunc {
+	jobPath := "/job/"
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get job number from request URL
+		slug := r.URL.Path[len(jobPath):]
+		if slug == "" {
+			slug = "0"
+		}
+		idx, err := strconv.Atoi(slug)
+		if err != nil {
+			logrus.Errorf("getting job index: %d", err)
+		}
+		if idx >= len(s.jobs) {
+			idx = 0
+		}
+
+		// Render job from index number
+		res, err := s.jobs[idx].Render()
+		if err != nil {
+			logrus.Errorf("rendering home page: %d", err)
+		}
+		fmt.Fprint(w, res)
+	}
+}
+
+func (s *Server) NewJob() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "POST":
+			// Call ParseForm() to parse the raw query and update r.PostForm and r.Form.
+			if err := r.ParseForm(); err != nil {
+				fmt.Fprintf(w, "ParseForm() err: %v", err)
+				return
+			}
+
+			// Extract form values
+			jobName := r.FormValue("jobname")
+			repos := r.FormValue("repos")
+			users := r.FormValue("users")
+			since := r.FormValue("since")
+			until := r.FormValue("until")
+
+			sinceParsed, err := tparse.ParseNow(dateForm, since)
+			if err != nil {
+				logrus.Errorf("Parsing from: %d", err)
+			}
+			untilParsed, err := tparse.ParseNow(dateForm, until)
+			if err != nil {
+				logrus.Errorf("Parsing from: %d", err)
+			}
+
+			s.AddJob(context.Background(), job.New(&job.Opts{
+				Repos: strings.Split(repos, ","),
+				Users: strings.Split(users, ","),
+				Since: sinceParsed,
+				Until: untilParsed,
+				Title: jobName,
+			}))
+
+			http.Redirect(w, r, fmt.Sprintf("/job/%d", len(s.jobs)-1), http.StatusFound)
+		default:
+			fmt.Fprintf(w, "Sorry, only POST method is supported.")
+		}
+	}
+}
+
+func (s *Server) AddJob(ctx context.Context, j *job.Job) {
+	s.jobs = append(s.jobs, j)
+	go j.Update(ctx, s.cl)
 }
 
 // Healthz returns a dummy healthz page - it's always happy here!

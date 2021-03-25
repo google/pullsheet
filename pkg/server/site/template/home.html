@@ -1,0 +1,75 @@
+<html lang="en">
+<head>
+    <title>HOME</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f7f7fa;
+            padding: 1em;
+        }
+
+        h1 {
+            font-size: larger;
+            color: rgb(66,133,244);
+            margin-bottom: 0em;
+        }
+
+        ul {
+            padding: 0;
+            margin-bottom: 3em;
+            list-style-type: none;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #666;
+            font-size: small;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .board p {
+            font-size: small;
+            color: #999;
+            text-align: center;
+        }
+
+        h3 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1> JOBS </h1>
+    <ul>
+    {{ range $i, $job := .Jobs }}
+        <li><a href="/job/{{$i}}"><h1>{{$i}} {{ .Title }}</h1></a></li>
+    {{ end }}
+    </ul>
+
+    <h1> NEW JOB </h1>
+    <form method="POST" action="/new-job">
+        <label for="jobname">Job name:</label><br>
+        <input type="text" id="jobname" name="jobname" value="New Job"><br>
+
+        <label for="repos">Repos:</label><br>
+        <input type="text" id="repos" name="repos" value="GoogleContainerTools/skaffold"><br>
+
+        <label for="users">Users:</label><br>
+        <input type="text" id="users" name="users" value="MarlonGamez"><br>
+
+        <label for="since">From:</label><br>
+        <input type="text" id="since" name="since" value="2021-01-01"><br>
+
+        <label for="until">Until:</label><br>
+        <input type="text" id="until" name="until" value="2021-01-31"><br>
+
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>

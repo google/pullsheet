@@ -69,6 +69,9 @@ func runServer(rootOpts *rootOptions) error {
 
 	s := server.New(ctx, c, j)
 	http.HandleFunc("/", s.Root())
+	http.HandleFunc("/home", s.Home())
+	http.HandleFunc("/job/", s.Job())
+	http.HandleFunc("/new-job", s.NewJob())
 	http.HandleFunc("/healthz", s.Healthz())
 	http.HandleFunc("/threadz", s.Threadz())
 

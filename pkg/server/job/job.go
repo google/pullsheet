@@ -72,3 +72,7 @@ func (j *Job) Update(ctx context.Context, cl *client.Client) {
 		logrus.Errorf("Failed to update job: %d", err)
 	}
 }
+
+func (j *Job) GetOpts() Opts {
+	return *j.opts
+}
