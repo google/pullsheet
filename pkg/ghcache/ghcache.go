@@ -65,7 +65,7 @@ func PullRequestsListFiles(ctx context.Context, p persist.Cacher, c *github.Clie
 		return val.GHCommitFiles, nil
 	}
 
-	logrus.Debugf("cache miss for %v: %s", key)
+	logrus.Debugf("cache miss for %v", key)
 
 	opts := &github.ListOptions{PerPage: 100}
 	fs := []*github.CommitFile{}
@@ -85,7 +85,6 @@ func PullRequestsListFiles(ctx context.Context, p persist.Cacher, c *github.Clie
 	}
 
 	return fs, p.Set(key, &persist.Blob{GHCommitFiles: fs})
-
 }
 
 func PullRequestsListComments(ctx context.Context, p persist.Cacher, c *github.Client, t time.Time, org string, project string, num int) ([]*github.PullRequestComment, error) {
@@ -96,7 +95,7 @@ func PullRequestsListComments(ctx context.Context, p persist.Cacher, c *github.C
 		return val.GHPullRequestComments, nil
 	}
 
-	logrus.Debugf("cache miss for %v: %s", key)
+	logrus.Debugf("cache miss for %v", key)
 
 	cs := []*github.PullRequestComment{}
 	opts := &github.PullRequestListCommentsOptions{
@@ -128,7 +127,7 @@ func IssuesGet(ctx context.Context, p persist.Cacher, c *github.Client, t time.T
 		return val.GHIssue, nil
 	}
 
-	logrus.Debugf("cache miss for %v: %s", key)
+	logrus.Debugf("cache miss for %v", key)
 
 	i, _, err := c.Issues.Get(ctx, org, project, num)
 	if err != nil {
