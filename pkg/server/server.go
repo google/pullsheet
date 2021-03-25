@@ -66,7 +66,9 @@ func (s *Server) Threadz() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logrus.Infof("GET %s: %v", r.URL.Path, r.Header)
 		w.WriteHeader(http.StatusOK)
-		w.Write(stack())
+		if _, err := w.Write(stack()); err != nil {
+			logrus.Errorf("writing threadz response: %d", err)
+		}
 	}
 }
 
