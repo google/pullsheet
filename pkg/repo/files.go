@@ -28,7 +28,7 @@ import (
 )
 
 // FilteredFiles returns a list of commit files that matter
-func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org string, project string, num int) ([]github.CommitFile, error) {
+func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org string, project string, num int) ([]*github.CommitFile, error) {
 	logrus.Infof("Fetching file list for #%d", num)
 
 	changed, err := ghcache.PullRequestsListFiles(ctx, c.Cache, c.GitHubClient, t, org, project, num)
@@ -38,7 +38,7 @@ func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org strin
 
 	logrus.Infof("%s/%s #%d had %d changed files", org, project, num, len(changed))
 
-	files := []github.CommitFile{}
+	files := []*github.CommitFile{}
 	for _, cf := range changed {
 		if ignorePathRe.MatchString(cf.GetFilename()) {
 			logrus.Infof("ignoring %s", cf.GetFilename())

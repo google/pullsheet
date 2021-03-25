@@ -43,7 +43,12 @@ func Pulls(ctx context.Context, c *client.Client, repos []string, users []string
 				return nil, fmt.Errorf("filtered files: %v", err)
 			}
 			logrus.Errorf("%s files: %v", pr, files)
-			prFiles[pr] = files
+
+			prFiles[pr] = []github.CommitFile{}
+
+			for _, f := range files {
+				prFiles[pr] = append(prFiles[pr], *f)
+			}
 		}
 	}
 
