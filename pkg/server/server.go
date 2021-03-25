@@ -17,15 +17,16 @@ package server
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"runtime"
+	"strconv"
+	"strings"
+
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/server/job"
 	"github.com/google/pullsheet/pkg/server/site"
 	"github.com/karrick/tparse"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"runtime"
-	"strconv"
-	"strings"
 )
 
 const dateForm = "2006-01-02"
@@ -51,7 +52,7 @@ func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
 func (s *Server) Root() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/home", 302)
-		//fmt.Fprint(w, res)
+		// fmt.Fprint(w, res)
 	}
 }
 

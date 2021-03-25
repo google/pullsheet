@@ -3,8 +3,9 @@ package site
 import (
 	"bytes"
 	"embed"
-	"github.com/google/pullsheet/pkg/server/job"
 	"html/template"
+
+	"github.com/google/pullsheet/pkg/server/job"
 )
 
 //go:embed template/*
@@ -22,7 +23,7 @@ func Home(jobs []*job.Job) (string, error) {
 		})
 	}
 
-	data := struct{
+	data := struct {
 		Jobs []jobData
 	}{
 		Jobs: jData,
@@ -37,7 +38,6 @@ func Home(jobs []*job.Job) (string, error) {
 	if err := t.Execute(&tpl, data); err != nil {
 		return "", err
 	}
-
 
 	out := tpl.String()
 	return out, nil
