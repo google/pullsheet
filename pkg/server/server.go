@@ -51,8 +51,7 @@ func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
 
 func (s *Server) Root() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/home", 302)
-		// fmt.Fprint(w, res)
+		http.Redirect(w, r, "/home", http.StatusFound)
 	}
 }
 
@@ -125,16 +124,16 @@ func (s *Server) NewJob() http.HandlerFunc {
 				Title: jobName,
 			}))
 
-			http.Redirect(w, r, fmt.Sprintf("/job/%d", len(s.jobs)-1), 302)
+			http.Redirect(w, r, fmt.Sprintf("/job/%d", len(s.jobs)-1), http.StatusFound)
 		default:
 			fmt.Fprintf(w, "Sorry, only POST method is supported.")
 		}
 	}
 }
 
-func (s *Server) AddJob(ctx context.Context, job *job.Job) {
-	s.jobs = append(s.jobs, job)
-	go job.Update(ctx, s.cl)
+func (s *Server) AddJob(ctx context.Context, j *job.Job) {
+	s.jobs = append(s.jobs, j)
+	go j.Update(ctx, s.cl)
 }
 
 // Healthz returns a dummy healthz page - it's always happy here!
