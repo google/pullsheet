@@ -49,7 +49,7 @@ func New(ctx context.Context, c Config) (*Client, error) {
 	}
 
 	if c.GitHubToken == "" {
-		c.GitHubToken = os.Getenv("GITHUB_TOKEN")
+		c.GitHubToken = strings.TrimSpace(os.Getenv("GITHUB_TOKEN"))
 	}
 
 	if c.GitHubToken == "" {
