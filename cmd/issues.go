@@ -17,14 +17,13 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/gocarina/gocsv"
+	"github.com/google/pullsheet/pkg/summary"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/google/pullsheet/pkg/client"
-	"github.com/google/pullsheet/pkg/repo"
 )
 
 // issuesCmd represents the subcommand for `pullsheet issues`
@@ -49,7 +48,7 @@ func runIssues(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := generateIssueData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := summary.Issues(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
@@ -63,18 +62,4 @@ func runIssues(rootOpts *rootOptions) error {
 	fmt.Print(out)
 
 	return nil
-}
-
-func generateIssueData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.IssueSummary, error) {
-	rs := []*repo.IssueSummary{}
-	for _, r := range repos {
-		org, project := repo.ParseURL(r)
-		rrs, err := repo.ClosedIssues(ctx, c, org, project, since, until, users)
-		if err != nil {
-			return nil, fmt.Errorf("merged pulls: %v", err)
-		}
-		rs = append(rs, rrs...)
-	}
-
-	return rs, nil
 }

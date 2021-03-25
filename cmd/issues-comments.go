@@ -17,13 +17,12 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/gocarina/gocsv"
+	"github.com/google/pullsheet/pkg/summary"
 	"github.com/spf13/cobra"
 
 	"github.com/google/pullsheet/pkg/client"
-	"github.com/google/pullsheet/pkg/repo"
 )
 
 // issuesCommentsCmd represents the subcommand for `pullsheet issue-comments`
@@ -48,7 +47,7 @@ func runIssueComments(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := generateCommentsData(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	data, err := summary.Comments(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
@@ -60,19 +59,4 @@ func runIssueComments(rootOpts *rootOptions) error {
 
 	fmt.Print(out)
 	return nil
-}
-
-func generateCommentsData(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.CommentSummary, error) {
-	rs := []*repo.CommentSummary{}
-	for _, r := range repos {
-		org, project := repo.ParseURL(r)
-		rrs, err := repo.IssueComments(ctx, c, org, project, since, until, users)
-		if err != nil {
-			return nil, fmt.Errorf("merged pulls: %v", err)
-		}
-
-		rs = append(rs, rrs...)
-	}
-
-	return rs, nil
 }

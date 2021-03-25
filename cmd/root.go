@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const dateForm = "2006-01-02"
@@ -114,10 +115,43 @@ func init() {
 		"info",
 		fmt.Sprintf("the logging verbosity, either %s", levelNames()),
 	)
+
+	// Set up viper flag handling
+	if err := viper.BindPFlags(rootCmd.PersistentFlags()); err != nil {
+		panic(err)
+	}
+}
+
+// initRootOpts sets up root options, using env variables to set options if
+// they haven't been set by flags
+func initRootOpts() error {
+	// Set up viper environment variable handling
+	viper.SetEnvPrefix("pullsheet")
+	envKeys := []string{
+		"repos", "users", "since", "until", "title", "token-path",
+	}
+	for _, key := range envKeys {
+		if err := viper.BindEnv(key); err != nil {
+			return err
+		}
+	}
+
+	// Set options. viper will prioritize flags over env variables
+	rootOpts.repos = viper.GetStringSlice("repos")
+	rootOpts.users = viper.GetStringSlice("users")
+	rootOpts.since = viper.GetString("since")
+	rootOpts.until = viper.GetString("until")
+	rootOpts.title = viper.GetString("title")
+	rootOpts.tokenPath = viper.GetString("token-path")
+
+	return nil
 }
 
 func initCommand(*cobra.Command, []string) error {
 	if err := setupGlobalLogger(rootOpts.logLevel); err != nil {
+		return err
+	}
+	if err := initRootOpts(); err != nil {
 		return err
 	}
 
