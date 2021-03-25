@@ -59,41 +59,69 @@ func PullRequestsGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t t
 func PullRequestsListFiles(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]github.CommitFile, error) {
 	key := fmt.Sprintf("pr-listfiles-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
 	val, err := read(dv, key)
-	if err != nil {
+
+	if err == nil {
+		logrus.Debugf("cache hit: %v", key)
+		return val.CommitFiles, nil
+	}
+
+	opts := &github.ListOptions{PerPage: 100}
+	fs := []github.CommitFile{}
+
+	for {
 		logrus.Debugf("cache miss for %v: %s", key, err)
-		fsp, _, err := c.PullRequests.ListFiles(ctx, org, project, num, &github.ListOptions{})
+		fsp, resp, err := c.PullRequests.ListFiles(ctx, org, project, num, opts)
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
 		}
-		fs := []github.CommitFile{}
+
 		for _, f := range fsp {
 			fs = append(fs, *f)
 		}
-		return fs, save(dv, key, &blob{CommitFiles: fs})
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opts.Page = resp.NextPage
 	}
 
-	logrus.Debugf("cache hit: %v", key)
-	return val.CommitFiles, nil
+	return fs, save(dv, key, &blob{CommitFiles: fs})
+
 }
 
 func PullRequestsListComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]github.PullRequestComment, error) {
 	key := fmt.Sprintf("pr-comments-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
 	val, err := read(dv, key)
-	if err != nil {
-		logrus.Debugf("cache miss for %v: %s", key, err)
-		csp, _, err := c.PullRequests.ListComments(ctx, org, project, num, &github.PullRequestListCommentsOptions{})
+
+	if err == nil {
+		logrus.Debugf("cache hit: %v", key)
+		return val.PullRequestComments, nil
+	}
+
+	logrus.Debugf("cache miss for %v: %s", key, err)
+
+	cs := []github.PullRequestComment{}
+	opts := &github.PullRequestListCommentsOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	for {
+		csp, resp, err := c.PullRequests.ListComments(ctx, org, project, num, opts)
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
 		}
-		cs := []github.PullRequestComment{}
+
 		for _, c := range csp {
 			cs = append(cs, *c)
 		}
-		return cs, save(dv, key, &blob{PullRequestComments: cs})
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.ListOptions.Page = resp.NextPage
 	}
 
-	logrus.Debugf("cache hit: %v", key)
-	return val.PullRequestComments, nil
+	return cs, save(dv, key, &blob{PullRequestComments: cs})
 }
 
 func IssuesGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) (*github.Issue, error) {
@@ -115,21 +143,35 @@ func IssuesGet(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Ti
 func IssuesListComments(ctx context.Context, dv *diskv.Diskv, c *github.Client, t time.Time, org string, project string, num int) ([]github.IssueComment, error) {
 	key := fmt.Sprintf("issue-comments-%s-%s-%d-%s", org, project, num, t.Format(keyTime))
 	val, err := read(dv, key)
-	if err != nil {
+
+	if err == nil {
+		logrus.Debugf("cache hit: %v", key)
+		return val.IssueComments, nil
+	}
+
+	opts := &github.IssueListCommentsOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	cs := []github.IssueComment{}
+	for {
 		logrus.Debugf("cache miss for %v: %s", key, err)
-		csp, _, err := c.Issues.ListComments(ctx, org, project, num, &github.IssueListCommentsOptions{})
+		csp, resp, err := c.Issues.ListComments(ctx, org, project, num, opts)
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
 		}
-		cs := []github.IssueComment{}
+
 		for _, c := range csp {
 			cs = append(cs, *c)
 		}
-		return cs, save(dv, key, &blob{IssueComments: cs})
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.ListOptions.Page = resp.NextPage
 	}
 
-	logrus.Debugf("cache hit: %v", key)
-	return val.IssueComments, nil
+	return cs, save(dv, key, &blob{IssueComments: cs})
 }
 
 func save(dv *diskv.Diskv, key string, blob *blob) error {

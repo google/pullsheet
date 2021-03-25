@@ -65,7 +65,7 @@ func (u *updater) getComments() []*repo.CommentSummary {
 
 func (u *updater) updateData(ctx context.Context, cl *client.Client, opts *Opts) error {
 	// Query data
-	prs, err := summary.Pulls(ctx, cl, opts.Repos, opts.Users, opts.Since, opts.Until)
+	prs, err := summary.Pulls(ctx, cl, opts.Repos, opts.Users, opts.Branches, opts.Since, opts.Until)
 	if err != nil {
 		return err
 	}

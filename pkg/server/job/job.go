@@ -32,11 +32,12 @@ type Job struct {
 
 // Options related to the Job
 type Opts struct {
-	Repos []string
-	Users []string
-	Since time.Time
-	Until time.Time
-	Title string
+	Repos    []string
+	Branches []string
+	Users    []string
+	Since    time.Time
+	Until    time.Time
+	Title    string
 }
 
 func New(opts *Opts) *Job {

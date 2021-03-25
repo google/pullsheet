@@ -50,7 +50,7 @@ func runLeaderBoard(rootOpts *rootOptions) error {
 		return err
 	}
 
-	prs, err := summary.Pulls(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.sinceParsed, rootOpts.untilParsed)
+	prs, err := summary.Pulls(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.branches, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}

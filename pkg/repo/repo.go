@@ -15,6 +15,7 @@
 package repo
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 )
@@ -28,9 +29,17 @@ func ParseURL(rawURL string) (org string, project string) {
 			return p[1], p[2]
 		}
 
+		if len(p) != 2 {
+			panic(fmt.Sprintf("%q from %q does not look like a repo", u.Path, rawURL))
+		}
+
 		return p[0], p[1]
 	}
 	// Not a URL
 	p := strings.Split(rawURL, "/")
+	if len(p) != 2 {
+		panic(fmt.Sprintf("%q does not look like a repo", rawURL))
+	}
+
 	return p[0], p[1]
 }

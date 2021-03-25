@@ -30,13 +30,13 @@ import (
 const dateForm = "2006-01-02"
 
 var (
-	ignorePathRe = regexp.MustCompile(`go\.mod|go\.sum|vendor/|third_party|ignore|schemas/v\d|schema/v\d|Gopkg.lock|.DS_Store`)
+	ignorePathRe = regexp.MustCompile(`go\.mod|go\.sum|vendor/|third_party|ignore|schemas/v\d|schema/v\d|Gopkg.lock|.DS_Store|\.json$|\.pb\.go|references/api/grpc|docs/commands/|pb\.gw\.go|proto/.*\.tmpl|proto/.*\.md`)
 	truncRe      = regexp.MustCompile(`changelog|CHANGELOG|Gopkg.toml`)
 	commentRe    = regexp.MustCompile(`<!--.*?>`)
 )
 
 // MergedPulls returns a list of pull requests in a project
-func MergedPulls(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string) ([]*github.PullRequest, error) {
+func MergedPulls(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string, branches []string) ([]*github.PullRequest, error) {
 	var result []*github.PullRequest
 
 	opts := &github.PullRequestListOptions{
@@ -51,6 +51,11 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 	matchUser := map[string]bool{}
 	for _, u := range users {
 		matchUser[strings.ToLower(u)] = true
+	}
+
+	matchBranch := map[string]bool{}
+	for _, b := range branches {
+		matchBranch[strings.ToLower(b)] = true
 	}
 
 	logrus.Infof("Gathering pull requests for %s/%s, users=%q: %+v", org, project, users, opts)
@@ -104,6 +109,12 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 					logrus.Errorf("failed PullRequestsGet: %v", err)
 					break
 				}
+			}
+
+			branch := fullPR.GetBase().GetRef()
+			if len(matchBranch) > 0 && !matchBranch[branch] {
+				logrus.Errorf("#%d merged to %s, skipping", pr.GetNumber(), branch)
+				continue
 			}
 
 			if !fullPR.GetMerged() || fullPR.GetMergeCommitSHA() == "" {
@@ -184,11 +195,13 @@ func PullSummary(prs map[*github.PullRequest][]github.CommitFile, since time.Tim
 				logrus.Infof("truncating %s from %d to %d lines added", f.GetFilename(), f.GetAdditions(), 10)
 				added += 10
 			} else {
+				logrus.Infof("%s - %d added, %d deleted", f.GetFilename(), f.GetAdditions(), f.GetDeletions())
 				added += f.GetAdditions()
 			}
 			deleted += f.GetDeletions()
 			paths = append(paths, f.GetFilename())
 		}
+		logrus.Infof("%s had %d files to consider - %d added, %d deleted", pr.GetHTMLURL(), len(files), added, deleted)
 
 		sum = append(sum, &PRSummary{
 			URL:         pr.GetHTMLURL(),
