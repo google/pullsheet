@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -45,6 +46,7 @@ type rootOptions struct {
 	sinceParsed time.Time
 	untilParsed time.Time
 	title       string
+	token       string
 	tokenPath   string
 	logLevel    string
 }
@@ -121,7 +123,7 @@ func initRootOpts() error {
 	// Set up viper environment variable handling
 	viper.SetEnvPrefix("pullsheet")
 	envKeys := []string{
-		"repos", "users", "since", "until", "title", "token-path",
+		"repos", "users", "since", "until", "title", "token-path", "token",
 	}
 	for _, key := range envKeys {
 		if err := viper.BindEnv(key); err != nil {
@@ -135,9 +137,30 @@ func initRootOpts() error {
 	rootOpts.since = viper.GetString("since")
 	rootOpts.until = viper.GetString("until")
 	rootOpts.title = viper.GetString("title")
-	rootOpts.tokenPath = viper.GetString("token-path")
+
+	token, err := initToken()
+	if err != nil {
+		return err
+	}
+	rootOpts.token = token
 
 	return nil
+}
+
+// initToken parses the github token either from the PULLSHEET_TOKEN env var or
+// from the file given by either PULLSHEET_TOKEN-PATH env var or --token-path
+func initToken() (string, error) {
+	if token := viper.GetString("token"); token != "" {
+		return token, nil
+	}
+
+	tokenPath := viper.GetString("token-path")
+	token, err := ioutil.ReadFile(tokenPath)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(token)), nil
 }
 
 func initCommand(*cobra.Command, []string) error {

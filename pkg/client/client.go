@@ -16,8 +16,6 @@ package client
 
 import (
 	"context"
-	"io/ioutil"
-	"strings"
 
 	"github.com/google/go-github/v33/github"
 	"github.com/peterbourgon/diskv"
@@ -31,13 +29,8 @@ type Client struct {
 	GitHubClient *github.Client
 }
 
-func New(ctx context.Context, tokenPath string) (*Client, error) {
-	token, err := ioutil.ReadFile(tokenPath)
-	if err != nil {
-		return nil, err
-	}
-
-	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: strings.TrimSpace(string(token))}))
+func New(ctx context.Context, token string) (*Client, error) {
+	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token}))
 	c := github.NewClient(tc)
 
 	dv, err := ghcache.New()
