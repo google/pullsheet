@@ -117,12 +117,12 @@ func (s *Server) NewJob() http.HandlerFunc {
 			}
 
 			s.AddJob(context.Background(), job.New(&job.Opts{
-				Repos: strings.Split(repos, ","),
+				Repos:    strings.Split(repos, ","),
 				Branches: strings.Split(branches, ","),
-				Users: strings.Split(users, ","),
-				Since: sinceParsed,
-				Until: untilParsed,
-				Title: jobName,
+				Users:    strings.Split(users, ","),
+				Since:    sinceParsed,
+				Until:    untilParsed,
+				Title:    jobName,
 			}))
 
 			http.Redirect(w, r, fmt.Sprintf("/job/%d", len(s.jobs)-1), http.StatusFound)
