@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime"
 
 	"github.com/sirupsen/logrus"
 
@@ -50,5 +51,36 @@ func (s *Server) Root() http.HandlerFunc {
 			logrus.Errorf("rendering job page: %s", err)
 		}
 		fmt.Fprint(w, res)
+	}
+}
+
+// Healthz returns a dummy healthz page - it's always happy here!
+func (s *Server) Healthz() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+// Threadz returns a threadz page
+func (s *Server) Threadz() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logrus.Infof("GET %s: %v", r.URL.Path, r.Header)
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write(stack()); err != nil {
+			logrus.Errorf("writing threadz response: %d", err)
+		}
+	}
+}
+
+// stack returns a formatted stack trace of all goroutines
+// It calls runtime.Stack with a large enough buffer to capture the entire trace.
+func stack() []byte {
+	buf := make([]byte, 1024)
+	for {
+		n := runtime.Stack(buf, true)
+		if n < len(buf) {
+			return buf[:n]
+		}
+		buf = make([]byte, 2*len(buf))
 	}
 }

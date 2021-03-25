@@ -1,0 +1,14 @@
+apiVersion: skaffold/v2beta13
+kind: Config
+metadata:
+  name: pullsheet
+build:
+  artifacts:
+  - image: pullsheet
+    context: .
+    docker: {}
+deploy:
+  kubectl:
+    manifests:
+    - deploy/kubernetes/*.yaml
+

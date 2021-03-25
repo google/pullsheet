@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pullsheet
+spec:
+  selector:
+    matchLabels:
+      app: pullsheet
+  template:
+    metadata:
+      labels:
+        app: pullsheet
+    spec:
+      containers:
+      - name: pullsheet
+        image: pullsheet
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PULLSHEET_REPOS
+          value: "google/pullsheet"
+        - name: PULLSHEET_USERS
+          value: "tstromberg marlongamez"
+        - name: PULLSHEET_SINCE
+          value: "2021-03-01"
+        - name: PULLSHEET_UNTIL
+          value: "2021-03-24"
+        - name: PULLSHEET_TITLE
+          value: "Pullsheet Stats"
