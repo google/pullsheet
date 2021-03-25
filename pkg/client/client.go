@@ -16,18 +16,19 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/google/go-github/v33/github"
-	"github.com/peterbourgon/diskv"
 	"golang.org/x/oauth2"
 
-	"github.com/google/pullsheet/pkg/ghcache"
+	"github.com/google/triage-party/pkg/persist"
 )
 
 type Client struct {
-	Cache        *diskv.Diskv
+	Cache        persist.Cacher
 	GitHubClient *github.Client
 }
 
@@ -40,13 +41,17 @@ func New(ctx context.Context, tokenPath string) (*Client, error) {
 	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: strings.TrimSpace(string(token))}))
 	c := github.NewClient(tc)
 
-	dv, err := ghcache.New()
+	p, err := persist.FromEnv("pullsheet", os.Getenv("PERSIST_BACKEND"), os.Getenv("PERSIST_PATH"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("persist fromenv: %v", err)
+	}
+
+	if err := p.Initialize(); err != nil {
+		return nil, fmt.Errorf("persist init: %v", err)
 	}
 
 	return &Client{
-		Cache:        dv,
+		Cache:        p,
 		GitHubClient: c,
 	}, nil
 }
