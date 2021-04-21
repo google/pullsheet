@@ -24,18 +24,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	keyTime = "2006-01-02T150405"
-)
-
-type blob struct {
-	PullRequest         github.PullRequest
-	CommitFiles         []github.CommitFile
-	PullRequestComments []github.PullRequestComment
-	IssueComments       []github.IssueComment
-	Issue               github.Issue
-}
-
 func PullRequestsGet(ctx context.Context, p persist.Cacher, c *github.Client, t time.Time, org string, project string, num int) (*github.PullRequest, error) {
 	key := fmt.Sprintf("pr-%s-%s-%d", org, project, num)
 	val := p.Get(key, t)
