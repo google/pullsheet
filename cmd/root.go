@@ -128,7 +128,7 @@ func initRootOpts() error {
 	// Set up viper environment variable handling
 	viper.SetEnvPrefix("pullsheet")
 	envKeys := []string{
-		"repos", "users", "since", "until", "title", "token-path",
+		"repos", "branches", "users", "since", "until", "title", "token-path",
 	}
 	for _, key := range envKeys {
 		if err := viper.BindEnv(key); err != nil {
@@ -138,6 +138,7 @@ func initRootOpts() error {
 
 	// Set options. viper will prioritize flags over env variables
 	rootOpts.repos = viper.GetStringSlice("repos")
+	rootOpts.branches = viper.GetStringSlice("branches")
 	rootOpts.users = viper.GetStringSlice("users")
 	rootOpts.since = viper.GetString("since")
 	rootOpts.until = viper.GetString("until")

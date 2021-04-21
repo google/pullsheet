@@ -60,11 +60,12 @@ func runServer(rootOpts *rootOptions) error {
 	// setup initial job
 	j := job.New(
 		&job.Opts{
-			Repos: rootOpts.repos,
-			Users: rootOpts.users,
-			Since: rootOpts.sinceParsed,
-			Until: rootOpts.untilParsed,
-			Title: rootOpts.title,
+			Repos:    rootOpts.repos,
+			Users:    rootOpts.users,
+			Branches: rootOpts.branches,
+			Since:    rootOpts.sinceParsed,
+			Until:    rootOpts.untilParsed,
+			Title:    rootOpts.title,
 		})
 
 	s := server.New(ctx, c, j)

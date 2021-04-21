@@ -37,16 +37,15 @@ type Server struct {
 }
 
 func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
-	jobs := []*job.Job{}
+	server := &Server{
+		cl:   c,
+		jobs: []*job.Job{},
+	}
 	if initJob != nil {
-		jobs = append(jobs, initJob)
-		go initJob.Update(ctx, c)
+		server.AddJob(ctx, initJob)
 	}
 
-	return &Server{
-		cl:   c,
-		jobs: jobs,
-	}
+	return server
 }
 
 func (s *Server) Root() http.HandlerFunc {
@@ -103,6 +102,7 @@ func (s *Server) NewJob() http.HandlerFunc {
 			// Extract form values
 			jobName := r.FormValue("jobname")
 			repos := r.FormValue("repos")
+			branches := r.FormValue("branches")
 			users := r.FormValue("users")
 			since := r.FormValue("since")
 			until := r.FormValue("until")
@@ -117,11 +117,12 @@ func (s *Server) NewJob() http.HandlerFunc {
 			}
 
 			s.AddJob(context.Background(), job.New(&job.Opts{
-				Repos: strings.Split(repos, ","),
-				Users: strings.Split(users, ","),
-				Since: sinceParsed,
-				Until: untilParsed,
-				Title: jobName,
+				Repos:    strings.Split(repos, ","),
+				Branches: strings.Split(branches, ","),
+				Users:    strings.Split(users, ","),
+				Since:    sinceParsed,
+				Until:    untilParsed,
+				Title:    jobName,
 			}))
 
 			http.Redirect(w, r, fmt.Sprintf("/job/%d", len(s.jobs)-1), http.StatusFound)
