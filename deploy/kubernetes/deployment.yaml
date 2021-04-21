@@ -18,6 +18,11 @@ spec:
         ports:
         - containerPort: 8080
         env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: pullsheet-github-token
+              key: token
         - name: PULLSHEET_REPOS
           value: "google/pullsheet"
         - name: PULLSHEET_USERS

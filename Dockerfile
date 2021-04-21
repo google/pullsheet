@@ -10,10 +10,9 @@ COPY pkg /src/pkg/
 RUN go mod download
 RUN go build
 
-# Get token and move binary into /app
+# Setup in /app
 FROM gcr.io/distroless/base AS pullsheet
 WORKDIR /app
 COPY --from=builder /src/pullsheet /app/
-COPY token /app/token
 
-CMD ["/app/pullsheet", "server", "--token-path=./token", "--log-level=info"]
+CMD ["/app/pullsheet", "server", "--log-level=info"]
