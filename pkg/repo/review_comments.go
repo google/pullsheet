@@ -25,7 +25,7 @@ import (
 
 	"github.com/blevesearch/segment"
 	"github.com/google/go-github/v33/github"
-	"github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
@@ -60,7 +60,7 @@ func MergedReviews(ctx context.Context, c *client.Client, org string, project st
 		return nil, fmt.Errorf("pulls: %v", err)
 	}
 
-	logrus.Infof("found %d PR's in %s/%s to find reviews for", len(prs), org, project)
+	klog.Infof("found %d PR's in %s/%s to find reviews for", len(prs), org, project)
 	reviews := []*ReviewSummary{}
 
 	matchUser := map[string]bool{}
@@ -100,7 +100,7 @@ func MergedReviews(ctx context.Context, c *client.Client, org string, project st
 
 			body := strings.TrimSpace(i.GetBody())
 			if (strings.HasPrefix(body, "/") || strings.HasPrefix(body, "cc")) && len(body) < 64 {
-				logrus.Infof("ignoring tag comment in %s: %q", i.GetHTMLURL(), body)
+				klog.Infof("ignoring tag comment in %s: %q", i.GetHTMLURL(), body)
 				continue
 			}
 
@@ -144,7 +144,7 @@ func MergedReviews(ctx context.Context, c *client.Client, org string, project st
 
 			prMap[c.Author].Date = c.CreatedAt.Format(dateForm)
 			prMap[c.Author].Words += wordCount
-			logrus.Infof("%d word comment by %s: %q for %s/%s #%d", wordCount, c.Author, strings.TrimSpace(c.Body), org, project, pr.GetNumber())
+			klog.Infof("%d word comment by %s: %q for %s/%s #%d", wordCount, c.Author, strings.TrimSpace(c.Body), org, project, pr.GetNumber())
 		}
 
 		for _, rs := range prMap {

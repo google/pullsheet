@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
-	"github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
@@ -76,7 +76,7 @@ func issues(ctx context.Context, c *client.Client, org string, project string, s
 		matchUser[strings.ToLower(u)] = true
 	}
 
-	logrus.Infof("Gathering issues for %s/%s, users=%q: %+v", org, project, users, opts)
+	klog.Infof("Gathering issues for %s/%s, users=%q: %+v", org, project, users, opts)
 	for page := 1; page != 0; {
 		opts.ListOptions.Page = page
 		issues, resp, err := c.GitHubClient.Issues.ListByRepo(ctx, org, project, opts)
@@ -84,22 +84,22 @@ func issues(ctx context.Context, c *client.Client, org string, project string, s
 			return result, err
 		}
 
-		logrus.Infof("Processing page %d of %s/%s issue results ...", page, org, project)
+		klog.Infof("Processing page %d of %s/%s issue results ...", page, org, project)
 
 		page = resp.NextPage
-		logrus.Infof("Current issue updated at %s", issues[0].GetUpdatedAt())
+		klog.Infof("Current issue updated at %s", issues[0].GetUpdatedAt())
 
 		for _, i := range issues {
 			if i.IsPullRequest() {
 				continue
 			}
 			if i.GetClosedAt().After(until) {
-				logrus.Infof("issue #%d closed at %s", i.GetNumber(), i.GetUpdatedAt())
+				klog.Infof("issue #%d closed at %s", i.GetNumber(), i.GetUpdatedAt())
 				continue
 			}
 
 			if i.GetUpdatedAt().Before(since) {
-				logrus.Infof("Hit issue #%d updated at %s", i.GetNumber(), i.GetUpdatedAt())
+				klog.Infof("Hit issue #%d updated at %s", i.GetNumber(), i.GetUpdatedAt())
 				page = 0
 				break
 			}
@@ -109,13 +109,13 @@ func issues(ctx context.Context, c *client.Client, org string, project string, s
 			}
 
 			if state != "" && i.GetState() != state {
-				logrus.Infof("Skipping issue #%d (state=%q)", i.GetNumber(), i.GetState())
+				klog.Infof("Skipping issue #%d (state=%q)", i.GetNumber(), i.GetState())
 				continue
 			}
 
 			t := issueDate(i)
 
-			logrus.Infof("Fetching #%d (closed %s, updated %s): %q", i.GetNumber(), i.GetClosedAt().Format(dateForm), i.GetUpdatedAt().Format(dateForm), i.GetTitle())
+			klog.Infof("Fetching #%d (closed %s, updated %s): %q", i.GetNumber(), i.GetClosedAt().Format(dateForm), i.GetUpdatedAt().Format(dateForm), i.GetTitle())
 
 			full, err := ghcache.IssuesGet(ctx, c.Cache, c.GitHubClient, t, org, project, i.GetNumber())
 			if err != nil {
@@ -123,7 +123,7 @@ func issues(ctx context.Context, c *client.Client, org string, project string, s
 				full, err = ghcache.IssuesGet(ctx, c.Cache, c.GitHubClient, t, org, project, i.GetNumber())
 			}
 			if err != nil {
-				logrus.Errorf("failed IssuesGet: %v", err)
+				klog.Errorf("failed IssuesGet: %v", err)
 				break
 			}
 
@@ -137,7 +137,7 @@ func issues(ctx context.Context, c *client.Client, org string, project string, s
 		}
 	}
 
-	logrus.Infof("Returning %d issues", len(result))
+	klog.Infof("Returning %d issues", len(result))
 	return result, nil
 }
 

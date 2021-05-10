@@ -20,8 +20,8 @@ import (
 	"strings"
 
 	"github.com/google/pullsheet/pkg/summary"
+	"k8s.io/klog/v2"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/google/pullsheet/pkg/client"
@@ -80,7 +80,7 @@ func runLeaderBoard(rootOpts *rootOptions) error {
 		return err
 	}
 
-	logrus.Infof("%d bytes of issue-comments output", len(out))
+	klog.Infof("%d bytes of issue-comments output", len(out))
 	fmt.Print(out)
 
 	return nil

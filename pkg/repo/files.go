@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
-	"github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
@@ -29,22 +29,22 @@ import (
 
 // FilteredFiles returns a list of commit files that matter
 func FilteredFiles(ctx context.Context, c *client.Client, t time.Time, org string, project string, num int) ([]*github.CommitFile, error) {
-	logrus.Infof("Fetching file list for #%d", num)
+	klog.Infof("Fetching file list for #%d", num)
 
 	changed, err := ghcache.PullRequestsListFiles(ctx, c.Cache, c.GitHubClient, t, org, project, num)
 	if err != nil {
 		return nil, err
 	}
 
-	logrus.Infof("%s/%s #%d had %d changed files", org, project, num, len(changed))
+	klog.Infof("%s/%s #%d had %d changed files", org, project, num, len(changed))
 
 	files := []*github.CommitFile{}
 	for _, cf := range changed {
 		if ignorePathRe.MatchString(cf.GetFilename()) {
-			logrus.Infof("ignoring %s", cf.GetFilename())
+			klog.Infof("ignoring %s", cf.GetFilename())
 			continue
 		}
-		logrus.Errorf("#%d changed: %s", num, cf.GetFilename())
+		klog.Errorf("#%d changed: %s", num, cf.GetFilename())
 
 		files = append(files, cf)
 	}
@@ -63,7 +63,7 @@ func prType(files []github.CommitFile) string {
 			if result == "" {
 				result = "docs"
 			}
-			logrus.Infof("%s: %s", f, result)
+			klog.Infof("%s: %s", f, result)
 			continue
 		}
 
@@ -71,7 +71,7 @@ func prType(files []github.CommitFile) string {
 			if result == "" {
 				result = "tests"
 			}
-			logrus.Infof("%s: %s", f, result)
+			klog.Infof("%s: %s", f, result)
 			continue
 		}
 
@@ -87,7 +87,7 @@ func prType(files []github.CommitFile) string {
 			result = "frontend"
 		}
 
-		logrus.Infof("%s (ext=%s): %s", f, ext, result)
+		klog.Infof("%s (ext=%s): %s", f, ext, result)
 	}
 
 	if result == "" {

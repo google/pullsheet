@@ -21,7 +21,7 @@ import (
 
 	"github.com/google/go-github/v33/github"
 	"github.com/google/triage-party/pkg/persist"
-	"github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 )
 
 func PullRequestsGet(ctx context.Context, p persist.Cacher, c *github.Client, t time.Time, org string, project string, num int) (*github.PullRequest, error) {
@@ -33,7 +33,7 @@ func PullRequestsGet(ctx context.Context, p persist.Cacher, c *github.Client, t 
 	}
 
 	if val == nil {
-		logrus.Debugf("cache miss for %v", key)
+		klog.Infof("cache miss for %v", key)
 		pr, _, err := c.PullRequests.Get(ctx, org, project, num)
 		if err != nil {
 			return nil, fmt.Errorf("get: %v", err)
@@ -41,7 +41,7 @@ func PullRequestsGet(ctx context.Context, p persist.Cacher, c *github.Client, t 
 		return pr, p.Set(key, &persist.Blob{GHPullRequest: pr})
 	}
 
-	logrus.Debugf("cache hit: %v", key)
+	klog.Infof("cache hit: %v", key)
 	return val.GHPullRequest, nil
 }
 
@@ -53,7 +53,7 @@ func PullRequestsListFiles(ctx context.Context, p persist.Cacher, c *github.Clie
 		return val.GHCommitFiles, nil
 	}
 
-	logrus.Debugf("cache miss for %v", key)
+	klog.Infof("cache miss for %v", key)
 
 	opts := &github.ListOptions{PerPage: 100}
 	fs := []*github.CommitFile{}
@@ -83,7 +83,7 @@ func PullRequestsListComments(ctx context.Context, p persist.Cacher, c *github.C
 		return val.GHPullRequestComments, nil
 	}
 
-	logrus.Debugf("cache miss for %v", key)
+	klog.Infof("cache miss for %v", key)
 
 	cs := []*github.PullRequestComment{}
 	opts := &github.PullRequestListCommentsOptions{
@@ -115,7 +115,7 @@ func IssuesGet(ctx context.Context, p persist.Cacher, c *github.Client, t time.T
 		return val.GHIssue, nil
 	}
 
-	logrus.Debugf("cache miss for %v", key)
+	klog.Infof("cache miss for %v", key)
 
 	i, _, err := c.Issues.Get(ctx, org, project, num)
 	if err != nil {

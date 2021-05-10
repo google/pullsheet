@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
@@ -46,7 +46,7 @@ func IssueComments(ctx context.Context, c *client.Client, org string, project st
 		return nil, fmt.Errorf("issues: %v", err)
 	}
 
-	logrus.Infof("found %d issues to check comments on", len(is))
+	klog.Infof("found %d issues to check comments on", len(is))
 	reviews := []*CommentSummary{}
 
 	matchUser := map[string]bool{}
@@ -91,7 +91,7 @@ func IssueComments(ctx context.Context, c *client.Client, org string, project st
 
 			body := strings.TrimSpace(i.GetBody())
 			if (strings.HasPrefix(body, "/") || strings.HasPrefix(body, "cc")) && len(body) < 64 {
-				logrus.Infof("ignoring tag comment: %q", body)
+				klog.Infof("ignoring tag comment: %q", body)
 				continue
 			}
 
@@ -111,7 +111,7 @@ func IssueComments(ctx context.Context, c *client.Client, org string, project st
 			iMap[commenter].Comments++
 			iMap[commenter].Date = c.CreatedAt.Format(dateForm)
 			iMap[commenter].Words += wordCount
-			logrus.Infof("%d word comment by %s: %q for %s/%s #%d", wordCount, commenter, strings.TrimSpace(c.GetBody()), org, project, i.GetNumber())
+			klog.Infof("%d word comment by %s: %q for %s/%s #%d", wordCount, commenter, strings.TrimSpace(c.GetBody()), org, project, i.GetNumber())
 		}
 
 		for _, rs := range iMap {

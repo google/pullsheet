@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
-	"github.com/sirupsen/logrus"
+	"k8s.io/klog"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/repo"
@@ -42,7 +42,7 @@ func Pulls(ctx context.Context, c *client.Client, repos []string, users []string
 			if err != nil {
 				return nil, fmt.Errorf("filtered files: %v", err)
 			}
-			logrus.Errorf("%s files: %v", pr, files)
+			klog.Errorf("%s files: %v", pr, files)
 
 			prFiles[pr] = []github.CommitFile{}
 

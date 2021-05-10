@@ -20,8 +20,8 @@ import (
 
 	"github.com/gocarina/gocsv"
 	"github.com/google/pullsheet/pkg/summary"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
 )
@@ -58,7 +58,7 @@ func runReviews(rootOpts *rootOptions) error {
 		return err
 	}
 
-	logrus.Infof("%d bytes of reviews output", len(out))
+	klog.Infof("%d bytes of reviews output", len(out))
 	fmt.Print(out)
 
 	return nil

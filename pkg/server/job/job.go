@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/leaderboard"
@@ -69,7 +69,7 @@ func (j *Job) Render() (string, error) {
 func (j *Job) Update(ctx context.Context, cl *client.Client) {
 	err := j.u.updateData(ctx, cl, j.opts)
 	if err != nil {
-		logrus.Errorf("Failed to update job: %d", err)
+		klog.Errorf("Failed to update job: %d", err)
 	}
 }
 
