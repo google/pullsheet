@@ -15,15 +15,14 @@
 package cmd
 
 import (
-	"fmt"
-	"strings"
+	"flag"
 	"time"
 
 	"github.com/karrick/tparse"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/klog/v2"
 )
 
 const dateForm = "2006-01-02"
@@ -46,7 +45,6 @@ type rootOptions struct {
 	untilParsed time.Time
 	title       string
 	tokenPath   string
-	logLevel    string
 	branches    []string
 }
 
@@ -56,11 +54,15 @@ var rootOpts = &rootOptions{}
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Fatal(err)
+		klog.Fatal(err)
 	}
 }
 
 func init() {
+	klog.InitFlags(nil)
+
+	rootCmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
+
 	rootCmd.PersistentFlags().StringSliceVar(
 		&rootOpts.repos,
 		"repos",
@@ -109,13 +111,6 @@ func init() {
 		"GitHub token path",
 	)
 
-	rootCmd.PersistentFlags().StringVar(
-		&rootOpts.logLevel,
-		"log-level",
-		"info",
-		fmt.Sprintf("the logging verbosity, either %s", levelNames()),
-	)
-
 	// Set up viper flag handling
 	if err := viper.BindPFlags(rootCmd.PersistentFlags()); err != nil {
 		panic(err)
@@ -149,9 +144,6 @@ func initRootOpts() error {
 }
 
 func initCommand(*cobra.Command, []string) error {
-	if err := setupGlobalLogger(rootOpts.logLevel); err != nil {
-		return err
-	}
 	if err := initRootOpts(); err != nil {
 		return err
 	}
@@ -162,7 +154,7 @@ func initCommand(*cobra.Command, []string) error {
 	if err == nil {
 		rootOpts.sinceParsed = t
 	} else {
-		logrus.Infof("%q not a duration: %v", rootOpts.since, err)
+		klog.Infof("%q not a duration: %v", rootOpts.since, err)
 		rootOpts.sinceParsed, err = time.Parse(dateForm, rootOpts.since)
 		if err != nil {
 			return errors.Wrap(err, "since time parse")
@@ -175,7 +167,7 @@ func initCommand(*cobra.Command, []string) error {
 		if err == nil {
 			rootOpts.untilParsed = t
 		} else {
-			logrus.Infof("%q not a duration: %v", rootOpts.until, err)
+			klog.Infof("%q not a duration: %v", rootOpts.until, err)
 			rootOpts.untilParsed, err = time.Parse(dateForm, rootOpts.until)
 			if err != nil {
 				return errors.Wrap(err, "until time parse")
@@ -184,32 +176,4 @@ func initCommand(*cobra.Command, []string) error {
 	}
 
 	return nil
-}
-
-// SetupGlobalLogger uses to provided log level string and applies it globally.
-func setupGlobalLogger(level string) error {
-	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableTimestamp: true,
-		ForceColors:      true,
-	})
-
-	lvl, err := logrus.ParseLevel(level)
-	if err != nil {
-		return errors.Wrapf(err, "setting log level to %s", level)
-	}
-	logrus.SetLevel(lvl)
-	if lvl >= logrus.DebugLevel {
-		logrus.Debug("Setting commands globally into verbose mode")
-	}
-
-	logrus.Debugf("Using log level %q", lvl)
-	return nil
-}
-
-func levelNames() string {
-	levels := []string{}
-	for _, level := range logrus.AllLevels {
-		levels = append(levels, fmt.Sprintf("'%s'", level.String()))
-	}
-	return strings.Join(levels, ", ")
 }

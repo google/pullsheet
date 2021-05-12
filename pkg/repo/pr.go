@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
-	"github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/ghcache"
@@ -58,7 +58,7 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 		matchBranch[strings.ToLower(b)] = true
 	}
 
-	logrus.Infof("Gathering pull requests for %s/%s, users=%q: %+v", org, project, users, opts)
+	klog.Infof("Gathering pull requests for %s/%s, users=%q: %+v", org, project, users, opts)
 	for page := 1; page != 0; {
 		opts.ListOptions.Page = page
 		prs, resp, err := c.GitHubClient.PullRequests.List(ctx, org, project, opts)
@@ -66,18 +66,18 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 			return result, err
 		}
 
-		logrus.Infof("Processing page %d of %s/%s pull request results (looking for %s)...", page, org, project, since)
+		klog.Infof("Processing page %d of %s/%s pull request results (looking for %s)...", page, org, project, since)
 
 		page = resp.NextPage
-		logrus.Infof("Current PR updated at %s", prs[0].GetUpdatedAt())
+		klog.Infof("Current PR updated at %s", prs[0].GetUpdatedAt())
 		for _, pr := range prs {
 			if pr.GetClosedAt().After(until) {
-				logrus.Infof("PR#%d closed at %s", pr.GetNumber(), pr.GetUpdatedAt())
+				klog.Infof("PR#%d closed at %s", pr.GetNumber(), pr.GetUpdatedAt())
 				continue
 			}
 
 			if pr.GetUpdatedAt().Before(since) {
-				logrus.Infof("Hit PR#%d updated at %s", pr.GetNumber(), pr.GetUpdatedAt())
+				klog.Infof("Hit PR#%d updated at %s", pr.GetNumber(), pr.GetUpdatedAt())
 				page = 0
 				break
 			}
@@ -96,41 +96,41 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 			}
 
 			if pr.GetState() != "closed" {
-				logrus.Infof("Skipping PR#%d by %s (state=%q)", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetState())
+				klog.Infof("Skipping PR#%d by %s (state=%q)", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetState())
 				continue
 			}
 
-			logrus.Infof("Fetching PR #%d by %s (updated %s): %q", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetUpdatedAt(), pr.GetTitle())
+			klog.Infof("Fetching PR #%d by %s (updated %s): %q", pr.GetNumber(), pr.GetUser().GetLogin(), pr.GetUpdatedAt(), pr.GetTitle())
 			fullPR, err := ghcache.PullRequestsGet(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
 			if err != nil {
 				time.Sleep(1 * time.Second)
 				fullPR, err = ghcache.PullRequestsGet(ctx, c.Cache, c.GitHubClient, pr.GetMergedAt(), org, project, pr.GetNumber())
 				if err != nil {
-					logrus.Errorf("failed PullRequestsGet: %v", err)
+					klog.Errorf("failed PullRequestsGet: %v", err)
 					break
 				}
 			}
 
 			branch := fullPR.GetBase().GetRef()
 			if len(matchBranch) > 0 && !matchBranch[branch] {
-				logrus.Errorf("#%d merged to %s, skipping", pr.GetNumber(), branch)
+				klog.Errorf("#%d merged to %s, skipping", pr.GetNumber(), branch)
 				continue
 			}
 
 			if !fullPR.GetMerged() || fullPR.GetMergeCommitSHA() == "" {
-				logrus.Infof("#%d was not merged, skipping", pr.GetNumber())
+				klog.Infof("#%d was not merged, skipping", pr.GetNumber())
 				continue
 			}
 
 			if pr.GetMergedAt().Before(since) {
-				logrus.Infof("#%d was merged earlier than %s, skipping", pr.GetNumber(), since)
+				klog.Infof("#%d was merged earlier than %s, skipping", pr.GetNumber(), since)
 				continue
 			}
 
 			result = append(result, fullPR)
 		}
 	}
-	logrus.Infof("Returning %d pull request results", len(result))
+	klog.Infof("Returning %d pull request results", len(result))
 	return result, nil
 }
 
@@ -157,7 +157,7 @@ func PullSummary(prs map[*github.PullRequest][]github.CommitFile, since time.Tim
 
 	for pr, files := range prs {
 		if seen[pr.GetHTMLURL()] {
-			logrus.Infof("skipping seen issue: %s", pr.GetHTMLURL())
+			klog.Infof("skipping seen issue: %s", pr.GetHTMLURL())
 			continue
 		}
 		seen[pr.GetHTMLURL()] = true
@@ -176,12 +176,12 @@ func PullSummary(prs map[*github.PullRequest][]github.CommitFile, since time.Tim
 		}
 
 		if t.After(until) {
-			logrus.Infof("skipping %s - closed at %s, after %s", pr.GetHTMLURL(), t, until)
+			klog.Infof("skipping %s - closed at %s, after %s", pr.GetHTMLURL(), t, until)
 			continue
 		}
 
 		if t.Before(since) {
-			logrus.Infof("skipping %s - closed at %s, before %s", pr.GetHTMLURL(), t, since)
+			klog.Infof("skipping %s - closed at %s, before %s", pr.GetHTMLURL(), t, since)
 			continue
 		}
 
@@ -192,16 +192,16 @@ func PullSummary(prs map[*github.PullRequest][]github.CommitFile, since time.Tim
 		for _, f := range files {
 			// These files are mostly auto-generated
 			if truncRe.MatchString(f.GetFilename()) && f.GetAdditions() > 10 {
-				logrus.Infof("truncating %s from %d to %d lines added", f.GetFilename(), f.GetAdditions(), 10)
+				klog.Infof("truncating %s from %d to %d lines added", f.GetFilename(), f.GetAdditions(), 10)
 				added += 10
 			} else {
-				logrus.Infof("%s - %d added, %d deleted", f.GetFilename(), f.GetAdditions(), f.GetDeletions())
+				klog.Infof("%s - %d added, %d deleted", f.GetFilename(), f.GetAdditions(), f.GetDeletions())
 				added += f.GetAdditions()
 			}
 			deleted += f.GetDeletions()
 			paths = append(paths, f.GetFilename())
 		}
-		logrus.Infof("%s had %d files to consider - %d added, %d deleted", pr.GetHTMLURL(), len(files), added, deleted)
+		klog.Infof("%s had %d files to consider - %d added, %d deleted", pr.GetHTMLURL(), len(files), added, deleted)
 
 		sum = append(sum, &PRSummary{
 			URL:         pr.GetHTMLURL(),

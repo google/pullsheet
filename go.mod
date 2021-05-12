@@ -10,8 +10,9 @@ require (
 	github.com/google/triage-party v0.0.0-20210325043323-fc6840b93022
 	github.com/karrick/tparse v2.4.2+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
 	golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558
+	k8s.io/klog v1.0.0 // indirect
+	k8s.io/klog/v2 v2.0.0 // indirect
 )
