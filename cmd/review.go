@@ -16,14 +16,12 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/gocarina/gocsv"
 	"github.com/google/pullsheet/pkg/summary"
 	"github.com/spf13/cobra"
-	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
+	"github.com/google/pullsheet/pkg/print"
 )
 
 // reviewsCmd represents the subcommand for `pullsheet reviews`
@@ -53,13 +51,11 @@ func runReviews(rootOpts *rootOptions) error {
 		return err
 	}
 
-	out, err := gocsv.MarshalString(&data)
+	err = print.Print(data, rootOpts.out)
+
 	if err != nil {
 		return err
 	}
-
-	klog.Infof("%d bytes of reviews output", len(out))
-	fmt.Print(out)
 
 	return nil
 }
