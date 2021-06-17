@@ -117,7 +117,7 @@ func init() {
 		&rootOpts.out,
 		"out",
 		"CSV",
-		"Output type - CSV/JSON",
+		"Output type - CSV/JSON. Default is CSV",
 	)
 
 	// Set up viper flag handling
@@ -141,7 +141,7 @@ func initRootOpts() error {
 	}
 
 	if rootOpts.out != "JSON" && rootOpts.out != "CSV" {
-		return fmt.Errorf("Invalid out parameter %s. Enter JSON/CSV", rootOpts.out)
+		return fmt.Errorf("Invalid out parameter %s. Must be JSON or CSV", rootOpts.out)
 	}
 
 	// Set options. viper will prioritize flags over env variables

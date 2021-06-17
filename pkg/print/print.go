@@ -24,19 +24,21 @@ import (
 
 //This method prints the values in "data" interface to standatrd output in the format specified by "out_type", either JSON/CSV
 func Print(data interface{}, out_type string) error {
-	var er error
-	var out string
+	var (
+		err error
+		out string
+	)
 
 	if out_type == "JSON" {
 		var jsonvar []byte
-		jsonvar, er = json.Marshal(data)
+		jsonvar, err = json.Marshal(data)
 		out = string(jsonvar)
 	} else if out_type == "CSV" {
-		out, er = gocsv.MarshalString(data)
+		out, err = gocsv.MarshalString(data)
 	}
 
-	if er != nil {
-		return er
+	if err != nil {
+		return err
 	}
 
 	klog.Infof("%d bytes of reviews output", len(out))
