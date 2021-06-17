@@ -83,6 +83,9 @@ func issues(ctx context.Context, c *client.Client, org string, project string, s
 		if err != nil {
 			return result, err
 		}
+		if len(issues) == 0 {
+			break
+		}
 
 		klog.Infof("Processing page %d of %s/%s issue results ...", page, org, project)
 
