@@ -115,7 +115,7 @@ const leaderboardTmpl = `<html>
 
                 function draw{{.ID}}() {
                     var data = new google.visualization.arrayToDataTable([
-                    ['{{.Object}}', '{{.Metric}}', { role: 'annotation' }],
+                    [{label:'{{.Object}}',type:'string'},{label: '{{.Metric}}', type: 'number'}, { role: 'annotation' }],
                     {{ range .Items }}["{{.Name}}", {{.Count}}, "{{.Count}}"],
                     {{ end }}
                     ]);
