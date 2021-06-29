@@ -67,6 +67,7 @@ func MergedPulls(ctx context.Context, c *client.Client, org string, project stri
 		}
 
 		if len(prs) == 0 {
+			klog.Infof("There isn't any issue in %s/%s since %s", org, project, since)
 			break
 		}
 
