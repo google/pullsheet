@@ -22,18 +22,18 @@ import (
 	"k8s.io/klog"
 )
 
-//This method prints the values in "data" interface to standatrd output in the format specified by "out_type", either JSON/CSV
-func Print(data interface{}, out_type string) error {
+// This method prints the values in "data" interface to standatrd output in the format specified by "out_type", either JSON/CSV
+func Print(data interface{}, outType string) error {
 	var (
 		err error
 		out string
 	)
 
-	if out_type == "JSON" {
+	if outType == "JSON" {
 		var jsonvar []byte
 		jsonvar, err = json.Marshal(data)
 		out = string(jsonvar)
-	} else if out_type == "CSV" {
+	} else if outType == "CSV" {
 		out, err = gocsv.MarshalString(data)
 	}
 
