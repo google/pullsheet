@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"flag"
+	"fmt"
 	"time"
 
 	"github.com/karrick/tparse"
@@ -46,6 +47,7 @@ type rootOptions struct {
 	title       string
 	tokenPath   string
 	branches    []string
+	out         string
 }
 
 var rootOpts = &rootOptions{}
@@ -111,6 +113,13 @@ func init() {
 		"GitHub token path",
 	)
 
+	rootCmd.PersistentFlags().StringVar(
+		&rootOpts.out,
+		"out",
+		"CSV",
+		"Output type - CSV/JSON. Default is CSV",
+	)
+
 	// Set up viper flag handling
 	if err := viper.BindPFlags(rootCmd.PersistentFlags()); err != nil {
 		panic(err)
@@ -123,12 +132,16 @@ func initRootOpts() error {
 	// Set up viper environment variable handling
 	viper.SetEnvPrefix("pullsheet")
 	envKeys := []string{
-		"repos", "branches", "users", "since", "until", "title", "token-path",
+		"repos", "branches", "users", "since", "until", "title", "token-path", "out",
 	}
 	for _, key := range envKeys {
 		if err := viper.BindEnv(key); err != nil {
 			return err
 		}
+	}
+
+	if rootOpts.out != "JSON" && rootOpts.out != "CSV" {
+		return fmt.Errorf("invalid out parameter %s. Must be JSON or CSV", rootOpts.out)
 	}
 
 	// Set options. viper will prioritize flags over env variables
@@ -139,7 +152,7 @@ func initRootOpts() error {
 	rootOpts.until = viper.GetString("until")
 	rootOpts.title = viper.GetString("title")
 	rootOpts.tokenPath = viper.GetString("token-path")
-
+	rootOpts.out = viper.GetString("out")
 	return nil
 }
 

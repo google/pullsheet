@@ -16,9 +16,8 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/gocarina/gocsv"
+	"github.com/google/pullsheet/pkg/print"
 	"github.com/google/pullsheet/pkg/summary"
 	"github.com/spf13/cobra"
 
@@ -52,11 +51,11 @@ func runIssueComments(rootOpts *rootOptions) error {
 		return err
 	}
 
-	out, err := gocsv.MarshalString(&data)
+	err = print.Print(data, rootOpts.out)
+
 	if err != nil {
 		return err
 	}
 
-	fmt.Print(out)
 	return nil
 }
