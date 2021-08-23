@@ -175,7 +175,7 @@ func wordCount(s string) int {
 
 func isBot(u *github.User) bool {
 	includeBots := viper.GetBool("include-bots")
-	if includeBots == true {
+	if includeBots {
 		return false
 	}
 	if u.GetType() == "bot" {
