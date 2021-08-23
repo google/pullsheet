@@ -34,9 +34,10 @@ var TopX = 15
 
 // Options to use for rendering the leaderboard
 type Options struct {
-	Title string
-	Since time.Time
-	Until time.Time
+	Title          string
+	Since          time.Time
+	Until          time.Time
+	DisableCaching bool
 }
 
 type category struct {
@@ -66,16 +67,18 @@ func Render(options Options, users []string, prs []*repo.PRSummary, reviews []*r
 	}
 
 	data := struct {
-		Title      string
-		From       string
-		Until      string
-		Command    string
-		Categories []category
+		Title          string
+		From           string
+		Until          string
+		DisableCaching bool
+		Command        string
+		Categories     []category
 	}{
-		Title:   options.Title,
-		From:    options.Since.Format(dateForm),
-		Until:   options.Until.Format(dateForm),
-		Command: filepath.Base(os.Args[0]) + " " + strings.Join(os.Args[1:], " "),
+		Title:          options.Title,
+		From:           options.Since.Format(dateForm),
+		Until:          options.Until.Format(dateForm),
+		DisableCaching: options.DisableCaching,
+		Command:        filepath.Base(os.Args[0]) + " " + strings.Join(os.Args[1:], " "),
 		Categories: []category{
 			{
 				Title: "Reviewers",

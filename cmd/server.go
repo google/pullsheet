@@ -46,6 +46,11 @@ func init() {
 		"port",
 		8080,
 		"Port for server to listen on")
+	serverCmd.Flags().BoolVar(
+		&disableCaching,
+		"no-caching",
+		false,
+		"Disable caching on resulting HTML files")
 
 	rootCmd.AddCommand(serverCmd)
 }
@@ -60,12 +65,13 @@ func runServer(rootOpts *rootOptions) error {
 	// setup initial job
 	j := job.New(
 		&job.Opts{
-			Repos:    rootOpts.repos,
-			Users:    rootOpts.users,
-			Branches: rootOpts.branches,
-			Since:    rootOpts.sinceParsed,
-			Until:    rootOpts.untilParsed,
-			Title:    rootOpts.title,
+			Repos:          rootOpts.repos,
+			Users:          rootOpts.users,
+			Branches:       rootOpts.branches,
+			Since:          rootOpts.sinceParsed,
+			Until:          rootOpts.untilParsed,
+			Title:          rootOpts.title,
+			DisableCaching: disableCaching,
 		})
 
 	s := server.New(ctx, c, j)
