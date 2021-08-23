@@ -32,6 +32,13 @@ const dateForm = "2006-01-02"
 // TopX is how many items to include in graphs
 var TopX = 15
 
+// Options to use for rendering the leaderboard
+type Options struct {
+	Title string
+	Since time.Time
+	Until time.Time
+}
+
 type category struct {
 	Title  string
 	Charts []chart
@@ -51,7 +58,7 @@ type item struct {
 }
 
 // Render returns an HTML formatted leaderboard page
-func Render(title string, since time.Time, until time.Time, users []string, prs []*repo.PRSummary, reviews []*repo.ReviewSummary, issues []*repo.IssueSummary, comments []*repo.CommentSummary) (string, error) {
+func Render(options Options, users []string, prs []*repo.PRSummary, reviews []*repo.ReviewSummary, issues []*repo.IssueSummary, comments []*repo.CommentSummary) (string, error) {
 	funcMap := template.FuncMap{}
 	tmpl, err := template.New("LeaderBoard").Funcs(funcMap).Parse(leaderboardTmpl)
 	if err != nil {
@@ -65,9 +72,9 @@ func Render(title string, since time.Time, until time.Time, users []string, prs 
 		Command    string
 		Categories []category
 	}{
-		Title:   title,
-		From:    since.Format(dateForm),
-		Until:   until.Format(dateForm),
+		Title:   options.Title,
+		From:    options.Since.Format(dateForm),
+		Until:   options.Until.Format(dateForm),
 		Command: filepath.Base(os.Args[0]) + " " + strings.Join(os.Args[1:], " "),
 		Categories: []category{
 			{
