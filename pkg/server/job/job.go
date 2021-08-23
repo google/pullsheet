@@ -32,12 +32,13 @@ type Job struct {
 
 // Options related to the Job
 type Opts struct {
-	Repos    []string
-	Branches []string
-	Users    []string
-	Since    time.Time
-	Until    time.Time
-	Title    string
+	Repos          []string
+	Branches       []string
+	Users          []string
+	Since          time.Time
+	Until          time.Time
+	Title          string
+	DisableCaching bool
 }
 
 func New(opts *Opts) *Job {
@@ -58,7 +59,12 @@ func (j *Job) Render() (string, error) {
 		comments: j.u.getComments(),
 	}
 
-	result, err := leaderboard.Render(j.opts.Title, j.opts.Since, j.opts.Until, j.opts.Users, d.prs, d.reviews, d.issues, d.comments)
+	result, err := leaderboard.Render(leaderboard.Options{
+		Title:          j.opts.Title,
+		Since:          j.opts.Since,
+		Until:          j.opts.Until,
+		DisableCaching: j.opts.DisableCaching,
+	}, j.opts.Users, d.prs, d.reviews, d.issues, d.comments)
 	if err != nil {
 		return "", err
 	}

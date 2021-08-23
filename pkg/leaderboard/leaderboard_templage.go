@@ -17,6 +17,11 @@ package leaderboard
 const leaderboardTmpl = `<html>
 <head>
     <title>{{ .Title }} - Leaderboard</title>
+		{{ if .DisableCaching }}
+    <meta http-equiv="CacheControl" content="no-cache, no-store, must-revalidate"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <meta http-equiv="Expires" content="0"/>
+		{{ end }}
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>

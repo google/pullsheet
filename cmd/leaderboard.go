@@ -39,7 +39,15 @@ var leaderBoardCmd = &cobra.Command{
 	},
 }
 
+var disableCaching bool
+
 func init() {
+	leaderBoardCmd.Flags().BoolVar(
+		&disableCaching,
+		"no-caching",
+		false,
+		"Disable caching on resulting HTML files")
+
 	rootCmd.AddCommand(leaderBoardCmd)
 }
 
@@ -75,7 +83,12 @@ func runLeaderBoard(rootOpts *rootOptions) error {
 		title = strings.Join(rootOpts.repos, ", ")
 	}
 
-	out, err := leaderboard.Render(title, rootOpts.sinceParsed, rootOpts.untilParsed, rootOpts.users, prs, reviews, issues, comments)
+	out, err := leaderboard.Render(leaderboard.Options{
+		Title:          title,
+		Since:          rootOpts.sinceParsed,
+		Until:          rootOpts.untilParsed,
+		DisableCaching: disableCaching,
+	}, rootOpts.users, prs, reviews, issues, comments)
 	if err != nil {
 		return err
 	}
