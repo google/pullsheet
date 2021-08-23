@@ -48,6 +48,7 @@ type rootOptions struct {
 	tokenPath   string
 	branches    []string
 	out         string
+	includeBots bool // if true will include bots in the metrics
 }
 
 var rootOpts = &rootOptions{}
@@ -97,6 +98,14 @@ func init() {
 		"until",
 		"now",
 		"when to query till (date or duration)",
+	)
+
+	rootCmd.PersistentFlags().BoolVarP(
+		&rootOpts.includeBots,
+		"include-bots",
+		"",
+		false,
+		"include bots in the stats",
 	)
 
 	rootCmd.PersistentFlags().StringVar(
@@ -153,6 +162,7 @@ func initRootOpts() error {
 	rootOpts.title = viper.GetString("title")
 	rootOpts.tokenPath = viper.GetString("token-path")
 	rootOpts.out = viper.GetString("out")
+	rootOpts.includeBots = viper.GetBool("include-bots")
 	return nil
 }
 

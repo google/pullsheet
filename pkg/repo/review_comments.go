@@ -25,6 +25,7 @@ import (
 
 	"github.com/blevesearch/segment"
 	"github.com/google/go-github/v33/github"
+	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
@@ -173,6 +174,10 @@ func wordCount(s string) int {
 }
 
 func isBot(u *github.User) bool {
+	includeBots := viper.GetBool("include-bots")
+	if includeBots == true {
+		return false
+	}
 	if u.GetType() == "bot" {
 		return true
 	}
