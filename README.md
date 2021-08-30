@@ -21,7 +21,7 @@ You will need a GitHub authentication token from https://github.com/settings/tok
 
 ## Example: Merged PRs for 1 person across repos
 
-`go run pullsheet.go prs --repos kubernetes/minikube,GoogleContainerTools/skaffold --since 2019-10-01 --token-path /path/to/github/token/file --user someone > someone.csv`
+`go run pullsheet.go prs --repos kubernetes/minikube,GoogleContainerTools/skaffold --since 2019-10-01 --token-path /path/to/github/token/file --users someone > someone.csv`
 
 ## Example: Merged PR Reviews for all users in a repo
 
