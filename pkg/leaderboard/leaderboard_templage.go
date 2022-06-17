@@ -103,10 +103,10 @@ const leaderboardTmpl = `<html>
 <body>
     <h1>{{ .Title }}</h1>
     <div class="subtitle">{{.From}} &mdash; {{.Until}}</div>
-
+{{ if not .HideCommand }}
     <h2 class="cli">Command-line</h2>
     <pre>{{.Command}}</pre>
-
+{{ end }}
     {{ range .Categories }}
         <h2>{{ .Title }}</h2>
 

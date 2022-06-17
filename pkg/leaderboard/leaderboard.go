@@ -38,6 +38,7 @@ type Options struct {
 	Since          time.Time
 	Until          time.Time
 	DisableCaching bool
+	HideCommand    bool
 }
 
 type category struct {
@@ -72,6 +73,7 @@ func Render(options Options, users []string, prs []*repo.PRSummary, reviews []*r
 		Until          string
 		DisableCaching bool
 		Command        string
+		HideCommand    bool
 		Categories     []category
 	}{
 		Title:          options.Title,
@@ -79,6 +81,7 @@ func Render(options Options, users []string, prs []*repo.PRSummary, reviews []*r
 		Until:          options.Until.Format(dateForm),
 		DisableCaching: options.DisableCaching,
 		Command:        filepath.Base(os.Args[0]) + " " + strings.Join(os.Args[1:], " "),
+		HideCommand:    options.HideCommand,
 		Categories: []category{
 			{
 				Title: "Reviewers",
