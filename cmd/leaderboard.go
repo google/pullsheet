@@ -221,5 +221,5 @@ func writeToJSON(d *data) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(jsonOutput, b, 0644)
+	return os.WriteFile(jsonOutput, b, 0o644)
 }
