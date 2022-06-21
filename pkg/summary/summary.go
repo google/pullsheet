@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v33/github"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/google/pullsheet/pkg/client"
 	"github.com/google/pullsheet/pkg/repo"

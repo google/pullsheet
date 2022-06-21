@@ -26,7 +26,7 @@ import (
 	"github.com/google/pullsheet/pkg/server/job"
 	"github.com/google/pullsheet/pkg/server/site"
 	"github.com/karrick/tparse"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const dateForm = "2006-01-02"

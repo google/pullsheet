@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/gocarina/gocsv"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // This method prints the values in "data" interface to standatrd output in the format specified by "out_type", either JSON/CSV
