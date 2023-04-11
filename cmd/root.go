@@ -38,6 +38,7 @@ pullsheet generates a CSV (comma separated values) & HTML output about GitHub ac
 }
 
 type rootOptions struct {
+	org         string
 	repos       []string
 	users       []string
 	since       string
@@ -65,6 +66,13 @@ func init() {
 	klog.InitFlags(nil)
 
 	rootCmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
+
+	rootCmd.PersistentFlags().StringVar(
+		&rootOpts.org,
+		"org",
+		"",
+		"github org name",
+	)
 
 	rootCmd.PersistentFlags().StringSliceVar(
 		&rootOpts.repos,
