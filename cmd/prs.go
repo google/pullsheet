@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/google/pullsheet/pkg/print"
+	"github.com/google/pullsheet/pkg/repo"
 	"github.com/google/pullsheet/pkg/summary"
 	"github.com/spf13/cobra"
 
@@ -46,7 +47,15 @@ func runPRs(rootOpts *rootOptions) error {
 		return err
 	}
 
-	data, err := summary.Pulls(ctx, c, rootOpts.repos, rootOpts.users, rootOpts.branches, rootOpts.sinceParsed, rootOpts.untilParsed)
+	var repos []string
+
+	if len(rootOpts.org) > 0 {
+		repos, err = repo.ListRepoNames(ctx, c, rootOpts.org)
+	} else {
+		repos = rootOpts.repos
+	}
+
+	data, err := summary.Pulls(ctx, c, repos, rootOpts.users, rootOpts.branches, rootOpts.sinceParsed, rootOpts.untilParsed)
 	if err != nil {
 		return err
 	}
