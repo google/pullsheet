@@ -12,7 +12,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
 	golang.org/x/oauth2 v0.7.0
-	k8s.io/klog/v2 v2.0.0
+	k8s.io/klog/v2 v2.130.1
 )
 
 require (
@@ -21,7 +21,7 @@ require (
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20200501161113-5e9e23d7cb91 // indirect
 	github.com/etdub/goparsetime v0.0.0-20160315173935-ea17b0ac3318 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
-	github.com/go-logr/logr v0.1.0 // indirect
+	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
