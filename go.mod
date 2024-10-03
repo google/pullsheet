@@ -9,7 +9,7 @@ require (
 	github.com/google/triage-party v0.0.0-20210325043323-fc6840b93022
 	github.com/karrick/tparse v2.4.2+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.7.1
 	golang.org/x/oauth2 v0.7.0
 	k8s.io/klog/v2 v2.0.0
@@ -33,7 +33,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmoiron/sqlx v1.2.0 // indirect
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
