@@ -11,13 +11,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
-	golang.org/x/oauth2 v0.7.0
+	golang.org/x/oauth2 v0.24.0
 	k8s.io/klog/v2 v2.0.0
 )
 
 require (
-	cloud.google.com/go/compute v1.19.1 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20200501161113-5e9e23d7cb91 // indirect
 	github.com/etdub/goparsetime v0.0.0-20160315173935-ea17b0ac3318 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
