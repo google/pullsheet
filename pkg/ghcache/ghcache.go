@@ -110,6 +110,7 @@ func PullRequestsListComments(ctx context.Context, p persist.Cacher, c *github.C
 	return cs, p.Set(key, &persist.Blob{GHPullRequestComments: cs})
 }
 
+// IssuesGet gets an issue from the cache or GitHub for a given org, project, and number.
 func IssuesGet(ctx context.Context, p persist.Cacher, c *github.Client, t time.Time, org string, project string, num int) (*github.Issue, error) {
 	key := fmt.Sprintf("issue-%s-%s-%d", org, project, num)
 	val := p.Get(key, t)
