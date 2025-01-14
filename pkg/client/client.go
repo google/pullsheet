@@ -41,6 +41,7 @@ type Config struct {
 	PersistPath     string // Path to persist data.
 }
 
+// New creates a new github Client.
 func New(ctx context.Context, c Config) (*Client, error) {
 	if c.PersistBackend == "" {
 		c.PersistBackend = os.Getenv("PERSIST_BACKEND")
