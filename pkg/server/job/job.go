@@ -25,6 +25,7 @@ import (
 	"github.com/google/pullsheet/pkg/leaderboard"
 )
 
+// Job represents a job to be run by the server
 type Job struct {
 	opts *Opts
 	u    *updater

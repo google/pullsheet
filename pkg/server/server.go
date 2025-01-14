@@ -50,7 +50,7 @@ func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
 	return server
 }
 
-// Root	redirects to home page
+// Root redirects to home page
 func (s *Server) Root() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/home", http.StatusFound)
