@@ -39,7 +39,7 @@ type Opts struct {
 	Since          time.Time // Since when to query
 	Until          time.Time // Until when to query
 	Title          string    // Title of the leaderboard
-	DisableCaching bool      //Disable caching
+	DisableCaching bool      // Disable caching
 }
 
 // New creates a new Job

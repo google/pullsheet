@@ -24,7 +24,6 @@ import (
 
 // ListRepoNames returns the names of all the repositories of the specified Github organization.
 func ListRepoNames(ctx context.Context, c *client.Client, org string) ([]string, error) {
-
 	// Retrieve all the repositories of the specified Github organization
 	opt := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 10},
