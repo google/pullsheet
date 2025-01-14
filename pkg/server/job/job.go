@@ -80,6 +80,7 @@ func (j *Job) Update(ctx context.Context, cl *client.Client) {
 	}
 }
 
+// GetOpts returns the options for the Job
 func (j *Job) GetOpts() Opts {
 	return *j.opts
 }
