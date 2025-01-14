@@ -22,7 +22,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// This method prints the values in "data" interface to standatrd output in the format specified by "out_type", either JSON/CSV
+// Print the values in "data" interface to standatrd output in the format specified by "out_type", either JSON/CSV
 func Print(data interface{}, outType string) error {
 	var (
 		err error
