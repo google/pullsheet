@@ -91,7 +91,7 @@ func Issues(ctx context.Context, c *client.Client, repos []string, users []strin
 	return rs, nil
 }
 
-// Comments	returns a summary of comments for the specified repositories and users.
+// Comments returns a summary of comments for the specified repositories and users.
 func Comments(ctx context.Context, c *client.Client, repos []string, users []string, since time.Time, until time.Time) ([]*repo.CommentSummary, error) {
 	rs := []*repo.CommentSummary{}
 	for _, r := range repos {
