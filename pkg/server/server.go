@@ -31,6 +31,7 @@ import (
 
 const dateForm = "2006-01-02"
 
+// Server is a server for the pullsheet web app.
 type Server struct {
 	cl   *client.Client
 	jobs []*job.Job
