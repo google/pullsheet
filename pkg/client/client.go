@@ -27,6 +27,7 @@ import (
 	"github.com/google/triage-party/pkg/persist"
 )
 
+// Client is a client for interacting with GitHub and a cache.
 type Client struct {
 	Cache        persist.Cacher
 	GitHubClient *github.Client
