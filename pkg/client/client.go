@@ -33,11 +33,12 @@ type Client struct {
 	GitHubClient *github.Client
 }
 
+// Config is the configuration for a Client.
 type Config struct {
 	GitHubTokenPath string
 	GitHubToken     string
-	PersistBackend  string
-	PersistPath     string
+	PersistBackend  string // Backend to persist data.
+	PersistPath     string // Path to persist data.
 }
 
 func New(ctx context.Context, c Config) (*Client, error) {
