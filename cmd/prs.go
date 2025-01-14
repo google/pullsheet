@@ -61,7 +61,6 @@ func runPRs(rootOpts *rootOptions) error {
 	}
 
 	err = print.Print(data, rootOpts.out)
-
 	if err != nil {
 		return err
 	}
