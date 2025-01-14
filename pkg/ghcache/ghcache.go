@@ -24,6 +24,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
+// PullRequestsGet gets a pull request data from the cache or GitHub.
 func PullRequestsGet(ctx context.Context, p persist.Cacher, c *github.Client, t time.Time, org string, project string, num int) (*github.PullRequest, error) {
 	key := fmt.Sprintf("pr-%s-%s-%d", org, project, num)
 	val := p.Get(key, t)
@@ -45,6 +46,7 @@ func PullRequestsGet(ctx context.Context, p persist.Cacher, c *github.Client, t 
 	return val.GHPullRequest, nil
 }
 
+// PullRequestsListFiles gets a list of files in a pull request from the cache or GitHub.
 func PullRequestsListFiles(ctx context.Context, p persist.Cacher, c *github.Client, t time.Time, org string, project string, num int) ([]*github.CommitFile, error) {
 	key := fmt.Sprintf("pr-listfiles-%s-%s-%d", org, project, num)
 	val := p.Get(key, t)
@@ -75,6 +77,7 @@ func PullRequestsListFiles(ctx context.Context, p persist.Cacher, c *github.Clie
 	return fs, p.Set(key, &persist.Blob{GHCommitFiles: fs})
 }
 
+// Pull	RequestCommentsList gets a list of comments in a pull request from the cache or GitHub.
 func PullRequestsListComments(ctx context.Context, p persist.Cacher, c *github.Client, t time.Time, org string, project string, num int) ([]*github.PullRequestComment, error) {
 	key := fmt.Sprintf("pr-comments-%s-%s-%d", org, project, num)
 	val := p.Get(key, t)
