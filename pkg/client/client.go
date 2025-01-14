@@ -27,18 +27,21 @@ import (
 	"github.com/google/triage-party/pkg/persist"
 )
 
+// Client is a client for interacting with GitHub and a cache.
 type Client struct {
 	Cache        persist.Cacher
 	GitHubClient *github.Client
 }
 
+// Config is the configuration for a Client.
 type Config struct {
 	GitHubTokenPath string
 	GitHubToken     string
-	PersistBackend  string
-	PersistPath     string
+	PersistBackend  string // Backend to persist data.
+	PersistPath     string // Path to persist data.
 }
 
+// New creates a new github Client.
 func New(ctx context.Context, c Config) (*Client, error) {
 	if c.PersistBackend == "" {
 		c.PersistBackend = os.Getenv("PERSIST_BACKEND")

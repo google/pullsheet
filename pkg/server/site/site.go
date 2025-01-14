@@ -15,6 +15,7 @@ type jobData struct {
 	Title string
 }
 
+// Home returns the home page
 func Home(jobs []*job.Job) (string, error) {
 	jData := []jobData{}
 	for _, job := range jobs {

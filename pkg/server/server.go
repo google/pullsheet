@@ -31,11 +31,13 @@ import (
 
 const dateForm = "2006-01-02"
 
+// Server is a server for the pullsheet web app.
 type Server struct {
 	cl   *client.Client
 	jobs []*job.Job
 }
 
+// New creates a new server.
 func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
 	server := &Server{
 		cl:   c,
@@ -48,12 +50,14 @@ func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
 	return server
 }
 
+// Root redirects to home page
 func (s *Server) Root() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/home", http.StatusFound)
 	}
 }
 
+// Home returns the home page
 func (s *Server) Home() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, err := site.Home(s.jobs)
@@ -64,6 +68,7 @@ func (s *Server) Home() http.HandlerFunc {
 	}
 }
 
+// Job returns a job page
 func (s *Server) Job() http.HandlerFunc {
 	jobPath := "/job/"
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -89,6 +94,7 @@ func (s *Server) Job() http.HandlerFunc {
 	}
 }
 
+// NewJob creates a new job
 func (s *Server) NewJob() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -132,6 +138,7 @@ func (s *Server) NewJob() http.HandlerFunc {
 	}
 }
 
+// AddJob adds a job to the server
 func (s *Server) AddJob(ctx context.Context, j *job.Job) {
 	s.jobs = append(s.jobs, j)
 	go j.Update(ctx, s.cl)
