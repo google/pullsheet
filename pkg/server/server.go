@@ -37,6 +37,7 @@ type Server struct {
 	jobs []*job.Job
 }
 
+// New creates a new server.
 func New(ctx context.Context, c *client.Client, initJob *job.Job) *Server {
 	server := &Server{
 		cl:   c,
