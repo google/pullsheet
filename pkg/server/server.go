@@ -57,6 +57,7 @@ func (s *Server) Root() http.HandlerFunc {
 	}
 }
 
+// Home returns the home page
 func (s *Server) Home() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, err := site.Home(s.jobs)
@@ -92,6 +93,7 @@ func (s *Server) Job() http.HandlerFunc {
 	}
 }
 
+// NewJob creates a new job
 func (s *Server) NewJob() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
