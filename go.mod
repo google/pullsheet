@@ -3,7 +3,7 @@ module github.com/google/pullsheet
 go 1.21
 
 require (
-	github.com/blevesearch/segment v0.9.0
+	github.com/blevesearch/segment v0.9.1
 	github.com/gocarina/gocsv v0.0.0-20201208093247-67c824bc04d4
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/triage-party v1.6.0
