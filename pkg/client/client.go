@@ -17,7 +17,7 @@ package client
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -56,7 +56,7 @@ func New(ctx context.Context, c Config) (*Client, error) {
 	}
 
 	if c.GitHubToken == "" {
-		bs, err := ioutil.ReadFile(c.GitHubTokenPath)
+		bs, err := io.ReadFile(c.GitHubTokenPath)
 		if err != nil {
 			return nil, err
 		}
