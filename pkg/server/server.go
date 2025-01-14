@@ -68,6 +68,7 @@ func (s *Server) Home() http.HandlerFunc {
 	}
 }
 
+// Job returns a job page
 func (s *Server) Job() http.HandlerFunc {
 	jobPath := "/job/"
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -137,6 +138,7 @@ func (s *Server) NewJob() http.HandlerFunc {
 	}
 }
 
+// AddJob adds a job to the server
 func (s *Server) AddJob(ctx context.Context, j *job.Job) {
 	s.jobs = append(s.jobs, j)
 	go j.Update(ctx, s.cl)
