@@ -26,6 +26,7 @@ import (
 	"github.com/google/pullsheet/pkg/repo"
 )
 
+// Pulls returns a summary of pull requests for the specified repositories, users, and branches.
 func Pulls(ctx context.Context, c *client.Client, repos []string, users []string, branches []string, since time.Time, until time.Time) ([]*repo.PRSummary, error) {
 	prFiles := map[*github.PullRequest][]github.CommitFile{}
 
