@@ -1,6 +1,6 @@
 module github.com/google/pullsheet
 
-go 1.21
+go 1.22
 
 require (
 	github.com/blevesearch/segment v0.9.1
