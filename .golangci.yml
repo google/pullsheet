@@ -1,120 +1,162 @@
-run:
-  concurrency: 6
-  deadline: 5m
+# This configuration file is not a recommendation.
+#
+# We intentionally use a limited set of linters.
+# This configuration file is used with different version of golangci-lint to avoid regressions:
+# the linters can change between version,
+# their configuration may be not compatible or their reports can be different,
+# and this can break some of our tests.
+# Also, some linters are not relevant for the project (e.g. linters related to SQL).
+#
+# We have specific constraints, so we use a specific configuration.
+#
+# See the file `.golangci.reference.yml` to have a list of all available configuration options.
 
 linters:
   disable-all: true
+  # This list of linters is not a recommendation (same thing for all this configuration file).
+  # We intentionally use a limited set of linters.
+  # See the comment on top of this file.
   enable:
-    - asciicheck
     - bodyclose
-    - deadcode
+    - copyloopvar
     - depguard
     - dogsled
+    - dupl
     - errcheck
+    - errorlint
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
     - godox
     - gofmt
-    - gofumpt
-    - goheader
     - goimports
-    - golint
-    - gomodguard
+    - mnd
     - goprintffuncname
+    - gosec
     - gosimple
     - govet
+    - intrange
     - ineffassign
-    - interfacer
+    - lll
     - misspell
     - nakedret
-    - rowserrcheck
-    - sqlclosecheck
+    - noctx
+    - nolintlint
+    - revive
     - staticcheck
-    - structcheck
     - stylecheck
-    - typecheck
+    - testifylint
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
 
+
 linters-settings:
+  depguard:
+    rules:
+      logger:
+        deny:
+          # logging is allowed only by logutils.Log,
+          - pkg: "github.com/sirupsen/logrus"
+            desc: logging is allowed only by logutils.Log.
+          - pkg: "github.com/pkg/errors"
+            desc: Should be replaced by standard lib errors package.
+          - pkg: "github.com/instana/testify"
+            desc: It's a fork of github.com/stretchr/testify.
+        files:
+          # logrus is allowed to use only in logutils package.
+          - "!**/pkg/logutils/**.go"
+  dupl:
+    threshold: 100
+  funlen:
+    lines: -1 # the number of lines (code + empty lines) is not a right metric and leads to code without empty line or one-liner.
+    statements: 50
+  goconst:
+    min-len: 2
+    min-occurrences: 3
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+  gocyclo:
+    min-complexity: 15
   godox:
     keywords:
-      - BUG
       - FIXME
-      - HACK
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-  gocritic:
-    enabled-checks:
-      # Diagnostic
-      - appendAssign
-      - argOrder
-      - badCond
-      - caseOrder
-      - codegenComment
-      - commentedOutCode
-      - deprecatedComment
-      - dupArg
-      - dupBranchBody
-      - dupCase
-      - dupSubExpr
-      - exitAfterDefer
-      - flagDeref
-      - flagName
-      - nilValReturn
-      - offBy1
-      - sloppyReassign
-      - weakCond
-      - octalLiteral
+  gofmt:
+    rewrite-rules:
+      - pattern: 'interface{}'
+        replacement: 'any'
+  goimports:
+    local-prefixes: github.com/golangci/golangci-lint
+  mnd:
+    # don't include the "operation" and "assign"
+    checks:
+      - argument
+      - case
+      - condition
+      - return
+    ignored-numbers:
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+    ignored-functions:
+      - strings.SplitN
+  govet:
+    settings:
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+    enable:
+      - nilness
+      - shadow
+  errorlint:
+    asserts: false
+  lll:
+    line-length: 140
+  misspell:
+    locale: US
+    ignore-words:
+      - "importas" # linter name
+  nolintlint:
+    allow-unused: false # report any unused nolint directives
+    require-explanation: true # require an explanation for nolint directives
+    require-specific: true # require nolint directives to be specific about which linter is being skipped
+  revive:
+    rules:
+      - name: indent-error-flow
+      - name: unexported-return
+        disabled: true
+      - name: unused-parameter
+      - name: unused-receiver
 
-      # Performance
-      - appendCombine
-      - equalFold
-      - hugeParam
-      - indexAlloc
-      - rangeExprCopy
-      - rangeValCopy
+issues:
+  exclude-rules:
+    - path: (.+)_test\.go
+      linters:
+        - dupl
+        - mnd
+        - lll
+  exclude-dirs:
+    - .github
+  exclude-files:
+    # - pkg/goanalysis/runner_checker.go # extracted from x/tools code
 
-      # Style
-      - assignOp
-      - boolExprSimplify
-      - captLocal
-      - commentFormatting
-      - commentedOutImport
-      - defaultCaseOrder
-      - docStub
-      - elseif
-      - emptyFallthrough
-      - emptyStringTest
-      - hexLiteral
-      - methodExprCall
-      - regexpMust
-      - singleCaseSwitch
-      - sloppyLen
-      - stringXbytes
-      - switchTrue
-      - typeAssertChain
-      - typeSwitchVar
-      - underef
-      - unlabelStmt
-      - unlambda
-      - unslice
-      - valSwap
-      - wrapperFunc
-      - yodaStyleExpr
-      # - ifElseChain
-
-      # Opinionated
-      - builtinShadow
-      - importShadow
-      - initClause
-      - nestingReduce
-      - ptrToRefParam
-      - typeUnparen
-      - unnamedResult
-      - unnecessaryBlock
+run:
+  timeout: 6m
