@@ -9,7 +9,7 @@ require (
 	github.com/google/triage-party v1.6.0
 	github.com/karrick/tparse v2.4.2+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.9.1
+	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.7.1
 	golang.org/x/oauth2 v0.31.0
 	k8s.io/klog/v2 v2.0.0
@@ -43,7 +43,7 @@ require (
 	github.com/spf13/afero v1.1.2 // indirect
 	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/xanzy/go-gitlab v0.36.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
