@@ -29,11 +29,37 @@ import (
 
 const dateForm = "2006-01-02"
 
+// DefaultIgnorePathRe is the default regexp used to ignore generated / noisy paths.
+const DefaultIgnorePathRe = `go\.mod|go\.sum|vendor/|third_party|ignore|schemas/v\d|schema/v\d|Gopkg.lock|.DS_Store|\.json$|\.pb\.go|references/api/grpc|docs/commands/|pb\.gw\.go|proto/.*\.tmpl|proto/.*\.md`
+
+// DefaultTruncRe is the default regexp used to truncate large generated file deltas.
+const DefaultTruncRe = `changelog|CHANGELOG|Gopkg.toml`
+
 var (
-	ignorePathRe = regexp.MustCompile(`go\.mod|go\.sum|vendor/|third_party|ignore|schemas/v\d|schema/v\d|Gopkg.lock|.DS_Store|\.json$|\.pb\.go|references/api/grpc|docs/commands/|pb\.gw\.go|proto/.*\.tmpl|proto/.*\.md`)
-	truncRe      = regexp.MustCompile(`changelog|CHANGELOG|Gopkg.toml`)
+	ignorePathRe = regexp.MustCompile(DefaultIgnorePathRe)
+	truncRe      = regexp.MustCompile(DefaultTruncRe)
 	commentRe    = regexp.MustCompile(`<!--.*?>`)
 )
+
+// SetIgnorePathRe replaces the regexp used to ignore paths when summarizing PRs.
+func SetIgnorePathRe(pattern string) error {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return err
+	}
+	ignorePathRe = re
+	return nil
+}
+
+// SetTruncRe replaces the regexp used to truncate large file deltas.
+func SetTruncRe(pattern string) error {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return err
+	}
+	truncRe = re
+	return nil
+}
 
 // MergedPulls returns a list of pull requests in a project
 func MergedPulls(ctx context.Context, c *client.Client, org string, project string, since time.Time, until time.Time, users []string, branches []string) ([]*github.PullRequest, error) {

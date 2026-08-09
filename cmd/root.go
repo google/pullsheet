@@ -24,6 +24,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
+
+	"github.com/google/pullsheet/pkg/repo"
 )
 
 const dateForm = "2006-01-02"
@@ -50,6 +52,8 @@ type rootOptions struct {
 	branches    []string
 	out         string
 	includeBots bool // if true will include bots in the metrics
+	ignoreRe    string
+	truncRe     string
 }
 
 var rootOpts = &rootOptions{}
@@ -137,6 +141,20 @@ func init() {
 		"Output type - CSV/JSON. Default is CSV",
 	)
 
+	rootCmd.PersistentFlags().StringVar(
+		&rootOpts.ignoreRe,
+		"ignore-re",
+		repo.DefaultIgnorePathRe,
+		"regexp of file paths to ignore when summarizing pull request file changes",
+	)
+
+	rootCmd.PersistentFlags().StringVar(
+		&rootOpts.truncRe,
+		"trunc-re",
+		repo.DefaultTruncRe,
+		"regexp of file paths whose added-line counts should be truncated when summarizing pull requests",
+	)
+
 	// Set up viper flag handling
 	if err := viper.BindPFlags(rootCmd.PersistentFlags()); err != nil {
 		panic(err)
@@ -149,7 +167,7 @@ func initRootOpts() error {
 	// Set up viper environment variable handling
 	viper.SetEnvPrefix("pullsheet")
 	envKeys := []string{
-		"repos", "branches", "users", "since", "until", "title", "token-path", "out",
+		"repos", "branches", "users", "since", "until", "title", "token-path", "out", "ignore-re", "trunc-re",
 	}
 	for _, key := range envKeys {
 		if err := viper.BindEnv(key); err != nil {
@@ -171,6 +189,21 @@ func initRootOpts() error {
 	rootOpts.tokenPath = viper.GetString("token-path")
 	rootOpts.out = viper.GetString("out")
 	rootOpts.includeBots = viper.GetBool("include-bots")
+	rootOpts.ignoreRe = viper.GetString("ignore-re")
+	rootOpts.truncRe = viper.GetString("trunc-re")
+
+	if rootOpts.ignoreRe == "" {
+		rootOpts.ignoreRe = repo.DefaultIgnorePathRe
+	}
+	if rootOpts.truncRe == "" {
+		rootOpts.truncRe = repo.DefaultTruncRe
+	}
+	if err := repo.SetIgnorePathRe(rootOpts.ignoreRe); err != nil {
+		return fmt.Errorf("invalid --ignore-re: %w", err)
+	}
+	if err := repo.SetTruncRe(rootOpts.truncRe); err != nil {
+		return fmt.Errorf("invalid --trunc-re: %w", err)
+	}
 	return nil
 }
 
